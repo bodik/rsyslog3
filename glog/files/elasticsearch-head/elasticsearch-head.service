@@ -1,0 +1,16 @@
+[Unit]
+Description=elasticsearch-head
+
+[Service]
+ExecStart=/usr/bin/npm run start
+WorkingDirectory=/opt/elasticsearch-head
+Restart=always
+# Output to syslog
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=elasticsearch-head
+User=elasticsearch
+Group=elasticsearch
+
+[Install]
+WantedBy=multi-user.target

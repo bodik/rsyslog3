@@ -1,0 +1,15 @@
+input {
+        udp {
+                port => 39994
+		type => "misc"
+		codec => "json_lines"
+        }
+}
+input {
+        udp {
+                port => 39995
+		type => "sys"
+		codec => "json_lines"
+        }
+}
+

@@ -1,0 +1,21 @@
+<VirtualHost *:80>
+	ServerAdmin flab@cesnet.cz
+	ServerName <%= @fqdn %>
+	ServerAlias <%= @hostname %>
+	DocumentRoot /var/www/server
+	LogLevel warn
+	ErrorLog /var/log/apache2/<%= @fqdn %>-error.log
+	CustomLog /var/log/apache2/<%= @fqdn %>-access.log combined
+</VirtualHost>
+<VirtualHost _default_:443>
+	ServerAdmin flab@cesnet.cz
+	ServerName <%= @fqdn %>
+	DocumentRoot /var/www/server
+	LogLevel warn
+	ErrorLog /var/log/apache2/<%= @fqdn %>-error.log
+	CustomLog /var/log/apache2/<%= @fqdn %>-access.log combined
+
+	SSLEngine on
+        SSLCertificateKeyFile /etc/apache2/ssl/default.key
+        SSLCertificateFile    /etc/apache2/ssl/default.crt
+</VirtualHost>

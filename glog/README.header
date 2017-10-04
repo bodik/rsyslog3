@@ -1,0 +1,17 @@
+# glog -- Analytics ELK module
+
+Module provides basic installation and management of ELK stack for various data
+analytics. Includes installation of v5.x version of the stack.
+
+## Scripts
+
+**bin/delete-older-indexes.sh** -- cronjob script to purge old indexes acording to days parameter
+
+**bin/elastisearch-head-install.sh** -- manifest support script
+
+**bin/kibana-backup.sh** -- manifest support script, backups .kibana index from ESD
+
+**bin/kibana-restore.sh** -- manifest support script, restores .kibana index to ESD, overwrites existing
+
+**bin/listindexes.sh** -- list esd indexes using _cat interface
+
