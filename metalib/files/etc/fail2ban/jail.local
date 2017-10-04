@@ -1,0 +1,14 @@
+[DEFAULT]
+
+ignoreip = 127.0.0.1 78.128.214.0/26
+
+[sshd]
+
+enabled = true
+port    = ssh
+filter  = sshd
+logpath  = /var/log/auth.log
+maxretry = 20
+findtime = 86400
+bantime  = 1209600
+

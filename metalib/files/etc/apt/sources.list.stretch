@@ -1,0 +1,11 @@
+# stretch
+deb http://ftp.zcu.cz/pub/linux/debian stretch main contrib non-free
+deb http://ftp.zcu.cz/pub/linux/debian stretch-proposed-updates main contrib non-free
+deb http://ftp.zcu.cz/pub/linux/debian-security stretch/updates main contrib non-free
+deb-src http://ftp.zcu.cz/pub/linux/debian stretch main contrib non-free
+deb-src http://ftp.zcu.cz/pub/linux/debian stretch-proposed-updates main contrib non-free
+deb-src http://ftp.zcu.cz/pub/linux/debian-security stretch/updates main contrib non-free
+
+deb http://security.debian.org/ stretch/updates main contrib non-free
+deb-src http://security.debian.org/ stretch/updates main contrib non-free
+

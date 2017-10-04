@@ -1,0 +1,21 @@
+#!/bin/sh
+
+CONFDIR=/data/vboxauto
+
+case "$1" in
+	start)
+		for all in `ls $CONFDIR`; do
+			VMNAME=$all vboxlocal.init start
+		done
+	;;
+	stop)
+		for all in `ls $CONFDIR`; do
+			VMNAME=$all vboxlocal.init shutdown
+		done
+	;;
+
+	restart)
+		$0 stop
+		$0 start
+	;;
+esac

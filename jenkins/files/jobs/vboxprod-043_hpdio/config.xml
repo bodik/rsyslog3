@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>export VMNAME=&quot;HAAS-hpdio&quot;
+/puppet/jenkins/bin/vbox.init build small
+/puppet/jenkins/bin/vbox.init start
+/puppet/jenkins/bin/vbox.init fixup
+/puppet/jenkins/bin/vbox.init ssh &apos;wget https://haas.cesnet.cz/haas.git/bootstrap.install.sh &amp;&amp; sh -x bootstrap.install.sh&apos;
+###################
+
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh phase2.install.sh&apos;
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh metalib/tests/phase2.sh&apos;
+
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh hpdio.install.sh&apos;
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh hpdio/tests/hpdio.sh&apos;
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

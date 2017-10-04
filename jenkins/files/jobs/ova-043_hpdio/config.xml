@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>export VMNAME=&quot;HAAS-ova-hpdio&quot;
+/puppet/jenkins/bin/vbox.init build small
+/puppet/jenkins/bin/vbox.init start
+/puppet/jenkins/bin/vbox.init fixup
+/puppet/jenkins/bin/vbox.init ssh &apos;wget https://haas.cesnet.cz/haas.git/bootstrap.install.sh &amp;&amp; sh -x bootstrap.install.sh&apos;
+###################
+
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh phase2.install.sh&apos;
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh metalib/tests/phase2.sh&apos;
+
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh hpdio.install.sh&apos;
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh hpdio/tests/hpdio.sh&apos;
+###################
+
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh jenkins/bin/haas_vm_cleanup.sh&apos;
+/puppet/jenkins/bin/vbox.init shutdown
+/puppet/jenkins/bin/vbox.init export &quot;/data/builds/HAAS-hpdio.ova&quot;
+/puppet/jenkins/bin/vbox.init destroy
+
+###################
+/puppet/jenkins/bin/vbox.init import &quot;/data/builds/HAAS-hpdio.ova&quot;
+/puppet/jenkins/bin/vbox.init start
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh jenkins/bin/haas_vm_prepare.sh&apos; || true
+/bin/sleep 60
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh jenkins/bin/haas_vm_finalize.sh -a -w &quot;$(/puppet/metalib/bin/avahi_findservice.sh _warden-server._tcp)&quot; -n &quot;$(/puppet/jenkins/bin/haas_vm_generate_w3cname.sh).dionaea&quot; -t DUMMY&apos;
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh hpdio/tests/hpdio.sh&apos;</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

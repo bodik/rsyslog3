@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>export VMNAME=&quot;HAAS-test&quot;
+
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh glog2.install.sh&apos;
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh glog/tests/glog2.sh&apos;
+
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh warden3-tologstash.install.sh&apos;
+/puppet/jenkins/bin/vbox.init ssh &apos;cd /puppet &amp;&amp; sh warden3/tests/tologstash.sh&apos;
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>export VMNAME=&quot;HAAS-management&quot;
+/puppet/jenkins/bin/vbox.init build
+/puppet/jenkins/bin/vbox.init start
+/puppet/jenkins/bin/vbox.init fixup
+/puppet/jenkins/bin/vbox.init ssh &apos;dd if=/dev/urandom of=/random-data bs=102400 count=10240&apos;
+
+/puppet/jenkins/bin/vbox.init shutdown
+/puppet/jenkins/bin/vbox.init export &quot;/data/builds/HAAS-management.ova&quot;
+/puppet/jenkins/bin/vbox.init destroy
+
+/puppet/jenkins/bin/vbox.init import &quot;/data/builds/HAAS-management.ova&quot;
+/puppet/jenkins/bin/vbox.init start
+/puppet/jenkins/bin/vbox.init ssh &apos;hostname -f&apos;</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

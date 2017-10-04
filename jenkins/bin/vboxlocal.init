@@ -1,0 +1,260 @@
+#!/bin/sh
+
+VBOXBASE="/data"
+
+if [ -z $VMNAME ]; then
+	VMNAME="RS"
+fi
+cd /tmp || exit 1
+
+rreturn() {
+	RET=$1
+	MSG=$2
+	if [ $RET -eq 0 ]; then
+		echo "RESULT: OK $MSG"
+		exit 0
+	else
+		echo "RESULT: FAILED $MSG"
+		exit 1
+	fi
+
+	echo "RESULT: FAILED THIS SHOULD NOT HAPPEN $0 $@"
+	exit 1
+}
+
+
+
+vm_list() {
+	ALLVMS=$(VBoxManage list vms)
+	echo "$ALLVMS" | while read all; do 
+		#echo $all
+		NAME=$(echo $all | awk '{print $1}' | sed 's/"//g')
+		UID=$(echo $all | awk '{print $2}')
+		STATE=$(VBoxManage showvminfo $UID | grep "^State" | sed 's/State:\s*\(.*\)\s* (.*/\1/' | sed 's/ /_/g')
+		CPUS=$(VBoxManage showvminfo $UID | grep "^Number of CPUs:" | rev | awk '{print $1}' | rev)
+		MEMORY=$(VBoxManage showvminfo $UID | grep "^Memory size:" | rev | awk '{print $1}' | rev)
+		printf "%-25s %-40s %-12s %s %s\n" "${NAME}" "${UID}" "${STATE}" "$CPUS" "$MEMORY"
+	done
+}
+
+vm_status() {
+	/puppet/jenkins/bin/vboxlocal.init list | grep running | grep "^$VMNAME "
+	rreturn $? "$0 status"
+}
+
+vm_id() {
+	/puppet/jenkins/bin/vboxlocal.init list | grep "^$VMNAME " | awk '{print $2}'
+}
+
+vm_ip() {
+	VMID=$(/puppet/jenkins/bin/vboxlocal.init id)
+	if [ -z $VMID ]; then rreturn 1 "$0 VMID not detected"; fi
+	VMMAC=$(timeout 10 VBoxManage showvminfo $VMID | grep 'NIC 1:' | awk '{print $4}' | sed 's/,//' | xargs python -c 'import sys;print ":".join([sys.argv[1][i:i+2] for i in range(0, len(sys.argv[1]), 2)])')
+	if [ -z $VMMAC ]; then rreturn 1 "$0 VMMAC not detected"; fi
+	VMIP=$(ip neigh show | grep -v FAILED | grep -i $VMMAC | awk '{print $1}')
+
+	# in case of reboots, arp cache does not age by itself from old entries
+	if [ $(echo $VMIP | wc -l) -gt 1 ]; then
+		VMIPS=$(ip neigh show |  grep -v FAILED | grep -i $VMMAC | awk '{print $1}')
+		for all in $VMIPS; do
+			ping -c1 -w1 $all 1>/dev/null 2>/dev/null &
+		done
+		wait
+		sleep 1
+		VMIP=$(ip neigh show | grep -v FAILED | grep -i $VMMAC | awk '{print $1}')
+	fi
+
+	if [ -z $VMIP ]; then rreturn 1 "$0 ssh VMIP not detected"; fi
+	echo $VMIP
+	return 0
+}
+
+
+
+
+vm_build() {
+	TEMPLATE="$1"
+	mkdir "${VBOXBASE}/vms/${VMNAME}"
+	if [ $? -ne 0 ]; then
+		rreturn 1 "vm already exists"
+	fi
+
+	VBoxManage clonevm template-debian-stretch --name ${VMNAME}
+	if [ $? -ne 0 ]; then
+		rreturn 1 "$0 clone failed"
+	fi
+
+	VBoxManage registervm ${VBOXBASE}/vms/${VMNAME}/${VMNAME}.vbox
+
+	if [ "$TEMPLATE" = "small" ]; then
+		VBoxManage modifyvm ${VMNAME} --cpus 1 --memory 512
+		if [ $? -eq 0 ]; then
+			echo "INFO: template small applied"
+		fi
+	fi
+
+	sleep 5
+	rreturn $? "$0 build"
+}
+
+vm_start() {
+	/puppet/jenkins/bin/vboxlocal.init status
+	if [ $? -eq 0 ]; then
+		rreturn $? "vbox vm already running"
+	fi
+
+	VBoxHeadless --version | tail -1 | grep '^4\.'
+	if [ $? -eq 0 ]; then
+		VBOXOPTS="--vrdeproperty TCP/Ports=$(perl -e 'print int(50000+rand(1000));') --vrdeproperty TCP/Address=127.0.0.1 --vrdeproperty VNCPassword=$(/bin/dd if=/dev/urandom bs=100 count=1 2>/dev/null | /usr/bin/sha256sum | /usr/bin/awk '{print $1}' | sed 's/^.\{50\}//')"
+	else
+		VBOXOPTS="--vrde on --vrdeproperty TCP/Ports=$(perl -e 'print int(50000+rand(1000));') --vrdeproperty TCP/Address=127.0.0.1"
+	fi
+	VBoxHeadless -s ${VMNAME} $VBOXOPTS &
+	rreturn $? "$0 start"
+}
+
+vm_fixup() {
+	echo "ERROR: not implemented"
+	exit 1
+}
+
+
+
+vm_ssh() {
+	VMIP=$(/puppet/jenkins/bin/vboxlocal.init ip)
+	if [ $? -ne 0 ]; then
+		rreturn 1 "$0 ssh vmip not detected"
+	fi
+	ssh -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -o 'ConnectTimeout=5' -o 'LogLevel=quiet' root@$VMIP "$1"
+	rreturn $? "$0 ssh $@"
+}
+
+vbox_console() {
+	VBoxHeadless --version | tail -1 | grep '^4\.'
+	if [ $? -eq 0 ]; then
+		CMD=$(ps faxu | grep "/usr/lib/virtualbox/VBoxHeadless -s ${VMNAME}" | grep -v grep | sed 's/.* TCP\/Ports=\(.*\) .* TCP\/Address=\(.*\) .* VNCPassword=\(.*\)$/echo -n "\3" | xvncviewer -autopass \2:\1/')
+	else
+		PORT=$(ps faxu | grep "/usr/lib/virtualbox/VBoxHeadless -s ${VMNAME}" | grep -v grep | sed 's/.* TCP\/Ports=\([^ ]*\).*$/\1/')
+		ADDR=$(ps faxu | grep "/usr/lib/virtualbox/VBoxHeadless -s ${VMNAME}" | grep -v grep | sed 's/.* TCP\/Address=\([^ ]*\).*$/\1/')
+		CMD="rdesktop $ADDR:$PORT"
+	fi
+	sh -c "$CMD"
+}
+
+
+
+vm_shutdown() {
+	VBoxManage controlvm $VMNAME acpipowerbutton 
+	rreturn $? "$0 shutdown"
+}
+
+vm_destroy() {
+	for i in $(seq 1 3); do
+		VBoxManage unregistervm ${VMNAME} --delete
+		if [ $? -eq 0 ]; then
+			rreturn 0 "$0 destroy $@"
+		else
+			echo "INFO: waiting for vm unlock"
+			sleep 3
+		fi
+	done
+	rreturn 1 "$0 destroy $@"
+}
+
+
+
+vm_export() {
+	OUTFILE="$1"
+	if [ -z "${OUTFILE}" ]; then
+		rreturn 1 "$0 outfile parameter missing"
+	fi
+	mkdir -p $(dirname $1)
+	rm -f "$OUTFILE"
+	VBoxManage export "${VMNAME}" --vsys 0 --producturl "https://haas.cesnet.cz" --output "${OUTFILE}"
+
+	cd $(dirname "$OUTFILE")
+	sha256sum $(basename ${OUTFILE}) > ${OUTFILE}.sha256
+	gpg --list-keys | grep haas.cesnet.cz 1>/dev/null 2>/dev/null
+	if [ $? -eq 0 ]; then
+		gpg --sign --clear-sign ${OUTFILE}.sha256
+	fi
+
+	ls -lh "${OUTFILE}"
+	rreturn $? "$0 export"
+}
+
+vm_import() {
+	INPUTFILE="$1"
+	if [ ! -f "${INPUTFILE}" ]; then
+		rreturn 1 "$0 inputfile not found"
+	fi
+	VBoxManage import "${INPUTFILE}" --vsys 0 --vmname "${VMNAME}"
+	rreturn $? "$0 import"
+}
+
+
+
+case "$1" in
+	list)
+		vm_list "$2"
+	;;
+	status)
+		vm_status
+	;;
+	id)
+		vm_id
+	;;
+	ip)
+		vm_ip
+	;;
+
+
+
+
+	build)
+		vm_build "$2"
+	;;
+	start)
+		vm_start "$2"
+	;;
+	fixup)
+		vm_fixup
+	;;
+
+
+
+
+	ssh)
+		vm_ssh "$2"
+	;;
+	node)
+		VMNAME=$2 x.init ssh "$3"
+	;;
+	console|con)
+		vbox_console
+	;;
+
+
+
+	shutdown)
+		vm_shutdown
+	;;
+	destroy)
+		vm_destroy
+	;;
+
+
+	
+	export)
+		vm_export "$2"
+	;;
+	import)
+		vm_import "$2"
+	;;
+
+
+	*)
+		rreturn 1 "$0 wrong command"
+	;;
+esac
+

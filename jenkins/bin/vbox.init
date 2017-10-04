@@ -1,0 +1,205 @@
+#!/bin/sh
+
+export VBOXUSER="$(cat ~/.ssh/haas.username)"
+export VBOXRSA="~/.ssh/haas"
+export FRONT="$(cat ~/.ssh/haas.server)"
+
+if [ -z $VMNAME ]; then
+	VMNAME="RS"
+fi
+cd /tmp || exit 1
+
+rreturn() {
+	RET=$1
+	MSG=$2
+	if [ $RET -eq 0 ]; then
+		echo "RESULT: OK $MSG"
+		exit 0
+	else
+		echo "RESULT: FAILED $MSG"
+		exit 1
+	fi
+
+	echo "RESULT: FAILED THIS SHOULD NOT HAPPEN $0 $@"
+	exit 1
+}
+
+
+
+vm_list() {
+	front_ssh 'sh /puppet/jenkins/bin/vboxlocal.init list'
+}
+
+vm_status() {
+	/puppet/jenkins/bin/vbox.init list | grep running | grep "^$VMNAME "
+	rreturn $? "$0 status"
+}
+
+
+
+vm_build() {
+	/puppet/jenkins/bin/vbox.init shutdown
+	/puppet/jenkins/bin/vbox.init destroy
+	front_ssh "VMNAME=${VMNAME} sh /puppet/jenkins/bin/vboxlocal.init build $1"
+	rreturn $? "$0 build"
+}
+
+vm_start() {
+	/puppet/jenkins/bin/vbox.init list | grep running | grep "^$VMNAME "
+	if [ $? -eq 0 ]; then
+		rreturn $? "vm already running"
+	fi
+
+	front_ssh "VMNAME=${VMNAME} sh /puppet/jenkins/bin/vboxlocal.init start 1>/dev/null 2>/dev/null </dev/null"
+	RET=1
+	for i in `seq 1 600`; do
+		/puppet/jenkins/bin/vbox.init ssh /bin/true 1>/dev/null && RET=$? && break 1>/dev/null
+		/puppet/jenkins/bin/vbox.init status
+		sleep 1
+	done
+	if [ $RET -ne 0 ]; then
+		rreturn $RET "$0 start failed $VMNAME"
+	fi
+	rreturn $? "$0 start $VMNAME"
+}
+
+vm_fixup() {
+	rreturn 0 "$0 fixup"
+}
+
+
+
+vm_ssh() {
+	VMIP=$(front_ssh "VMNAME=$VMNAME /puppet/jenkins/bin/vboxlocal.init ip")
+	if [ $? -ne 0 ]; then rreturn 1 "$0 ssh VMIP not detected"; fi
+
+	ssh -i $VBOXRSA -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -o 'ConnectTimeout=5' -o 'LogLevel=quiet' root@${VMIP} "$1"
+	rreturn $? "$0 ssh $@"
+}
+
+
+
+vm_shutdown() {
+        /puppet/jenkins/bin/vbox.init front "VBoxManage showvminfo $VMNAME --details | grep 'running (since'"
+        if [ $? -eq 0 ]; then
+                /puppet/jenkins/bin/vbox.init ssh /bin/true
+                if [ $? -eq 0 ]; then
+                        #running, connection ok, send poweroff
+                        echo "INFO: sending poweroff"
+                        timeout 60 /puppet/jenkins/bin/vbox.init ssh poweroff
+                else
+                        #running, connection failed, force shutdown vm
+                        echo "INFO: force vm shutdown"
+                        front_ssh "VMNAME=${VMNAME} sh /puppet/jenkins/bin/vboxlocal.init shutdown"
+                fi
+
+                for i in `seq 1 60`; do
+                        /puppet/jenkins/bin/vbox.init front "pgrep -f '/usr/lib/virtualbox/VBoxHeadless -s $VMNAME'"
+                        if [ $? = 1 ]; then
+                                rreturn $? "shutdown"
+                        fi
+                        sleep 1
+                done
+
+                rreturn 1 "shutdown did not finished in time"
+
+        else
+                rreturn $? "shutdown vm not running"
+        fi
+}
+
+vm_destroy() {
+	front_ssh "VMNAME=${VMNAME} sh /puppet/jenkins/bin/vboxlocal.init destroy"
+	rreturn $? "$0 destroy"
+}
+
+
+
+vbox_creds() {
+	echo "transfer credentials to /dev/shm and then login"
+	su jenkins
+	echo "chown jenkins /dev/shm/sshkey"
+}
+
+front_ssh() {
+	ssh -i $VBOXRSA -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -o 'ConnectTimeout=5' -o 'LogLevel=quiet' -o 'NumberOfPasswordPrompts=0' ${VBOXUSER}@$FRONT "$1"
+	if [ $? -ne 0 ]; then
+		rreturn 1 "$0 cannt reach vbox frontent"
+	fi
+}
+
+
+vm_export() {
+	front_ssh "VMNAME=${VMNAME} sh /puppet/jenkins/bin/vboxlocal.init export $1"
+	rreturn $? "$0 export"
+}
+
+vm_import() {
+	front_ssh "VMNAME=${VMNAME} sh /puppet/jenkins/bin/vboxlocal.init import $1"
+	rreturn $? "$0 import $@"
+}
+
+
+case "$1" in
+	list)
+		vm_list "$2"
+	;;
+	status)
+		vm_status
+	;;
+
+
+
+	build)
+		vm_build "$2"
+	;;
+	start)
+		vm_start "$2"
+	;;
+	fixup)
+		vm_fixup
+	;;
+
+
+
+	ssh)
+		vm_ssh "$2"
+	;;
+	node)
+		VMNAME=$2 /puppet/jenkins/bin/vbox.init ssh "$3"
+	;;
+
+
+
+	shutdown)
+		vm_shutdown
+	;;
+	destroy)
+		vm_destroy
+	;;
+
+
+
+	creds)
+		vbox_creds
+	;;
+	front)
+		front_ssh "$2"
+	;;
+
+
+
+	export)
+		vm_export "$2"
+	;;
+	import)
+		vm_import "$2"
+	;;
+
+
+
+	*)
+		rreturn 1 "$0 wrong command"
+	;;
+esac
+

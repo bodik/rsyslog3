@@ -1,0 +1,17 @@
+# metalib -- generic masterless puppet module
+
+Contains various classes, resources and functions used by other modules
+
+## Scripts
+
+**bin/avahi_findservice.sh** -- discover service on the local network, returns URI or hostname associated with the service
+
+**bin/generate_module_doc.py** -- puppet-strings documentation generator script
+
+**bin/install_sslselfcert.sh** -- generates x509 self-signed certificate to specified directory. used by various manifests
+
+**bin/lib.sh** -- shell functions library
+
+**bin/pa.sh** -- masterless puppet frontend
+
+**bin/sysbench-disk.sh** -- cloud performance testing script

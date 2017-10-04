@@ -1,0 +1,25 @@
+[Unit]
+SourcePath=/puppet/jenkins/bin/vboxboot.init
+Description=vboxboot
+Wants=network-online.target vboxdrv.service
+After=network-online.target vboxdrv.service
+
+[Service]
+ExecStart=/puppet/jenkins/bin/vboxboot.init start
+ExecStop=/puppet/jenkins/bin/vboxboot.init stop
+WorkingDirectory=/tmp
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=vboxboot.init
+User=vbox
+Group=vbox
+TimeoutStartSec=5min
+TimeoutStopSec=5min
+Type=oneshot
+Restart=no
+GuessMainPID=no
+RemainAfterExit=yes
+
+
+[Install]
+WantedBy=multi-user.target
