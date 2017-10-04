@@ -72,7 +72,7 @@ class jenkins() {
 		require => Package["jenkins"],
 	}
 	exec { "gem install opennebula-cli":
-		command => "/usr/bin/gem install opennebula-cli -v '~>4.4.0'",
+		command => "/usr/bin/gem install opennebula-cli -v '~> 5.2.1'",
 		unless => "/usr/bin/gem list | /bin/grep opennebula-cli",
 		require => [Package["ruby-dev"], Package["make"], Exec["gem install nokogiri"]],
 	}

@@ -5,13 +5,13 @@ apt-get install -y git puppet
 
 if [ ! -d /puppet ]; then
 	cd /
-	git clone https://haas.cesnet.cz/haas.git
-	ln -sf /haas /puppet
+	git clone http://esb.metacentrum.cz/rsyslog3.git
+	ln -sf /rsyslog3 /puppet
 else
 	cd /puppet
-	git remote set-url origin https://haas.cesnet.cz/haas.git
+	git remote set-url origin http://esb.metacentrum.cz/rsyslog3.git
 	git pull
 fi
 
-cd /puppet && git remote set-url origin dev@haas.cesnet.cz:/data/haas.git
+cd /puppet && git remote set-url origin bodik@esb.metacentrum.cz:/data/rsyslog3.git
 
