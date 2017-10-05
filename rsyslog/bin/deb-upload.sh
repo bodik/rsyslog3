@@ -1,6 +1,6 @@
 
 FRONT='bodik@esb.metacentrum.cz'
-REPO="/data/rsyslog2-packages"
+REPO="/data/rsyslog3-packages"
 
 cd /tmp/build-area
 
@@ -8,7 +8,7 @@ dpkg-scanpackages ./ /dev/null | gzip > Packages.gz
 
 ssh $FRONT "find ${REPO} -type f -delete"
 scp * ${FRONT}:${REPO}/
-# >>> deb http://esb.metacentrum.cz/rsyslog2-packages ./
+# >>> deb http://esb.metacentrum.cz/rsyslog3-packages ./
 
 
 

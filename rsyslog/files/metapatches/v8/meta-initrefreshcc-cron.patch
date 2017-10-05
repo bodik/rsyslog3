@@ -1,12 +1,12 @@
-commit fd40e6356f19c7b5afdc1f71f1ba8e3c7b856c74
-Author: root <root@took23.ics.muni.cz>
-Date:   Wed Oct 5 15:00:55 2016 +0200
+commit b1088b132f379e86d90edc3f3979f7d3465bf5a8
+Author: root <root@ztook5.meta.zcu.cz>
+Date:   Thu Oct 5 16:27:37 2017 +0200
 
     meta-initrefreshcc-cron.patch
 
 diff --git a/debian/rsyslog.cron.d b/debian/rsyslog.cron.d
 new file mode 100644
-index 0000000..3022271
+index 00000000..3022271e
 --- /dev/null
 +++ b/debian/rsyslog.cron.d
 @@ -0,0 +1 @@

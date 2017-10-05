@@ -1,23 +1,18 @@
-commit 4cf04c6a45328d0d0cd083be12426d52976db1cd
-Author: root <root@took23.ics.muni.cz>
-Date:   Wed Oct 5 15:01:54 2016 +0200
+commit 2e8d75bdbdd89283c4ef788ec9733132166fac31
+Author: root <root@ztook5.meta.zcu.cz>
+Date:   Thu Oct 5 16:28:44 2017 +0200
 
     meta-initrefreshcc.patch
-    
-    init.d/rsyslog refreshcc
-    systemd service refreshcc
-    oprava bugu v kinitu pokud existuje defaultni ccache
-    https://rt4.cesnet.cz/rt/Ticket/Display.html?id=126655
 
 diff --git a/debian/rsyslog.init b/debian/rsyslog.init
-index 0389df6..57313e2 100644
+index 1e5aa328..1ec92efe 100644
 --- a/debian/rsyslog.init
 +++ b/debian/rsyslog.init
 @@ -14,6 +14,7 @@
  
  #
  # Author: Michael Biebl <biebl@debian.org>
-+# bodik@civ.zcu.cz
++# bodik@cesnet.cz
  #
  
  # PATH should only include /usr/* if it runs after the mountnfs.sh script
@@ -98,7 +93,7 @@ index 0389df6..57313e2 100644
  case "$1" in
    start)
  	log_daemon_msg "Starting $DESC" "$RSYSLOGD"
-@@ -117,6 +174,9 @@ case "$1" in
+@@ -120,6 +177,9 @@ case "$1" in
    status)
  	status_of_proc -p $PIDFILE $DAEMON $RSYSLOGD && exit 0 || exit $?
  	;;
@@ -106,10 +101,10 @@ index 0389df6..57313e2 100644
 +	do_refreshcc
 +	;;
    *)
- 	echo "Usage: $SCRIPTNAME {start|stop|rotate|restart|force-reload|status}" >&2
+ 	echo "Usage: $SCRIPTNAME {start|stop|rotate|restart|force-reload|try-restart|status}" >&2
  	exit 3
 diff --git a/rsyslog.service.in b/rsyslog.service.in
-index cb629ee..8f21e9b 100644
+index cb629ee7..8f21e9b9 100644
 --- a/rsyslog.service.in
 +++ b/rsyslog.service.in
 @@ -6,6 +6,9 @@ Documentation=http://www.rsyslog.com/doc/

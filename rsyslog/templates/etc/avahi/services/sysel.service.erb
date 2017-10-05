@@ -1,0 +1,22 @@
+<?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+
+<!-- See avahi.service(5) for more information about this configuration file -->
+
+<service-group>
+
+	<name replace-wildcards="yes">%h</name>
+
+	<service>
+		<type>_syseltcp._tcp</type>
+		<txt-record>url=<%= @fqdn %></txt-record>
+	</service>
+	<service>
+		<type>_syselgss._tcp</type>
+		<txt-record>url=<%= @fqdn %></txt-record>
+	</service>
+	<service>
+		<type>_syselrelp._tcp</type>
+		<txt-record>url=<%= @fqdn %></txt-record>
+	</service>
+</service-group>

@@ -1,13 +1,11 @@
-commit ef00d338ce99daa5cb321c5ac866a440f55fb572
-Author: root <root@took23.ics.muni.cz>
-Date:   Wed Oct 5 14:59:48 2016 +0200
+commit 439e4bc110607219d032ae7548e430df59809d22
+Author: root <root@ztook5.meta.zcu.cz>
+Date:   Thu Oct 5 16:25:50 2017 +0200
 
     meta-defaultcfg.patch
-    preservefqdn, stats, ratelimit
-    117780: perian - kernel vypisuje chybove hlasky do konzole
 
 diff --git a/debian/rsyslog.conf b/debian/rsyslog.conf
-index 607b302..92cb573 100644
+index cc009195..29e2cc02 100644
 --- a/debian/rsyslog.conf
 +++ b/debian/rsyslog.conf
 @@ -3,6 +3,7 @@
@@ -36,7 +34,7 @@ index 607b302..92cb573 100644
  
  # provides UDP syslog reception
  #module(load="imudp")
-@@ -96,4 +106,4 @@ news.notice			-/var/log/news/news.notice
+@@ -89,4 +99,4 @@ mail.err			/var/log/mail.err
  #
  # Emergencies are sent to everybody logged in.
  #

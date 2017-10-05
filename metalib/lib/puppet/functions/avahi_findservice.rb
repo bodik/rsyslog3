@@ -5,7 +5,7 @@ Puppet::Functions.create_function(:avahi_findservice) do
 	# @param name name of the service to discover
 	def avahi_findservice(name)
 		out= Facter::Util::Resolution.exec('/puppet/metalib/bin/avahi_findservice.sh '+name)
-		if out.nil?
+		if out.nil? or out.empty?
 			return :undef
 		else
 			return out

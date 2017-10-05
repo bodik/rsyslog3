@@ -1,3 +1,1 @@
-deb http://esb.metacentrum.cz/rsyslog2-packages ./
-deb http://ftp.debian.org/debian jessie-backports main contrib non-free
-deb-src http://ftp.debian.org/debian jessie-backports main contrib non-free
+deb http://esb.metacentrum.cz/rsyslog3-packages ./

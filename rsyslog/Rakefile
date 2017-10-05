@@ -34,19 +34,8 @@ task :lint => :clean do
 	fail if linter.errors?
 end
 
-desc "Generate documentation from README.rdoc and manifests"
+desc "Generate documentation from READMEs and manifests"
 task :doc do
-	out = ""
-	if File.exists?("README.header")
-		out += File.open("README.header", 'r') { |f| f.read }
-	end
-	files = Dir.glob(["manifests/*.pp", "lib/facter/*.rb"])
-	unless files.empty?
-		out += `puppet doc #{files.join(' ')}`
-	end
-	if File.exists?("README.footer")
-		out += File.open("README.footer", 'r') { |f| f.read }
-	end
-	File.open("README.rdoc", 'w') { |file| file.write(out) }
+	sh "python /puppet/metalib/bin/generate_module_doc.py"
 end
 

@@ -1,59 +1,33 @@
-# == Class: rsyslog::server
-#
 # Class will ensure installation of rsyslog packages and configures daemon to server mode eg. :
 # - imtcp, imrelp, optionally imgssapi on krb5 enabled nodes
 # - stores all incoming logs into IP based directory stucture
 # - optionaly forwards all gathered logs to rediser for analytics (omfwd).
 # - announce self to others using avahi.
 #
-# === Parameters
-#
-# [*version*]
-#   specific version to install (see rsyslog::install) 
-#
-# [*rediser_server*]
-#   hostname or ip to forward all logs to for analytics, has precedence over rediser_auto
-#   (default undef)
-#
-# [*rediser_auto*]
-#   perform rediser autodiscovery by avahi (defult true)
-#
-# [*rediser_service*]
-#   name of rediser service to discover (default "_rediser._tcp")
-#
-# === Examples
-#
-# install default version, perform autodiscovery and forward logs to rediser
-#
+# @example install, perform autodiscovery and forward logs to rediser
 #   include rsyslog::server
 #
-# install rsyslog from jessie, forwardm logs to designated analytics node
+# @example install, forwardm logs to designated analytics node
+#   class { "rsyslog::server": rediser_server => "1.2.3.4", }
 #
-#   class { "rsyslog::server": 
-#      version => "jessie",
-#      rediser_server => "1.2.3.4",
-#   }
+# @example install and do not forward gathered log anywhere
+#   class { "rsyslog::server": rediser_auto => false, }
 #
-# install rsyslog server and do not forward gathered log anywhere
-#
-#   class { "rsyslog::server":
-#     rediser_auto => false,
-#   }
-#
+# @param rediser_server hostname or ip to forward all logs to for analytics, has precedence over rediser_auto
+# @rediser_auto perform rediser autodiscovery by avahi
+# @rediser_service name of rediser service to discover
 class rsyslog::server ( 
-	$version = "meta",
-
 	$perhost = false,
 	$pertime = true,
 
 	$rediser_server = undef,
 	$rediser_auto = true,
-	$rediser_service = "_rediser._tcp",
+	$rediser_service = "_rediser._tcp1",
 
 	$avahi_broadcast = true,
 ) {
 
-	class { "rsyslog::install": version => $version, }
+	class { "rsyslog::install": }
 	service { "rsyslog": ensure => running, }
 
         notice("server services ACTIVE")
@@ -90,6 +64,10 @@ class rsyslog::server (
 	}
 
 	if ( $rediser_server_real ) {
+		notice($rediser_server_real)
+		notice($rediser_server_real)
+		notice($rediser_server_real)
+		notice($rediser_server_real)
 		file { "/etc/rsyslog.d/20-forwarder-rediser-syslog.conf":
 			content => template("${module_name}/etc/rsyslog.d/20-forwarder-rediser-syslog.conf.erb"),
 			owner => "root", group=> "root", mode=>"0644",
@@ -111,17 +89,16 @@ class rsyslog::server (
 
 
 
-	#kvuli testovani
-	#tcpkill
+	# tcpkill tests
 	package { ["libpcap0.8", "libnet1"]:
 		ensure => installed,
 	}
 
-	#autoconfig
+	# autoconfig
 	if($avahi_broadcast) {
 		include metalib::avahi
 		file { "/etc/avahi/services/sysel.service":
-			source => "puppet:///modules/${module_name}/etc/avahi/sysel.service",
+			content => template("${module_name}/etc/avahi/services/sysel.service.erb"),
 			owner => "root", group => "root", mode => "0644",
 			require => Package["avahi-daemon"], #tady ma byt class ale tvori kruhovou zavislost
 			notify => Service["avahi-daemon"],

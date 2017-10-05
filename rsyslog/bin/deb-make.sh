@@ -22,10 +22,10 @@ fi
 
 if [ -z "$RBVERSION" ]; then
 	#by default we build latest revision found in collab sources
-	RBVERSION=$(git branch -a | grep "\.rb[0-9]\+" | sort -rV | head -1 | sed 's#remotes/origin/##' | sed 's/*//g' | sed 's/ //g')
+	RBVERSION=$(git branch -a | grep "\.rb[0-9]\+" | sed 's#remotes/origin/##' | sort -rV | head -1 | sed 's/*//g' | sed 's/ //g')
 	
 fi
 git checkout $RBVERSION
 service rsyslog stop
-git-buildpackage --git-export-dir=../build-area/ -us -uc --git-debian-branch=$RBVERSION
+gbp buildpackage --git-export-dir=../build-area/ -us -uc --git-debian-branch=$RBVERSION
 
