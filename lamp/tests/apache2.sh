@@ -22,12 +22,12 @@ fi
 
 
 #basic virtualhosts
-curl --silent "http://$(facter fqdn)" | grep 'HaaS cesnet.cz'
+curl --silent "http://$(facter fqdn)" | grep 'Unauthorized access to this device is prohibited'
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 apache2 http index.php"
 fi
 
-curl --insecure --silent "https://$(facter fqdn)" | grep 'HaaS cesnet.cz'
+curl --insecure --silent "https://$(facter fqdn)" | grep 'Unauthorized access to this device is prohibited'
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 apache2 http index.php"
 fi
