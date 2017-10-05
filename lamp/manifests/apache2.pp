@@ -94,7 +94,7 @@ class lamp::apache2() {
 		owner => "root", group => "root", mode => "0755",
 	}
 	file { "/var/www/server/index.html":
-		content => "HaaS cesnet.cz -- Unauthorized access to this device is prohibited",
+		content => "rsyslog3 metacentrum.cz -- Unauthorized access to this device is prohibited",
 		owner => "root", group => "root", mode => "0644",
 	}
 	exec { "install_sslselfcert.sh":
