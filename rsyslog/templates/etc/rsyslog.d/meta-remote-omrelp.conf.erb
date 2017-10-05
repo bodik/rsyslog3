@@ -1,0 +1,15 @@
+#vzdalene logovani
+
+module(load="omrelp")
+*.* action(type="omrelp"
+        target="<%= @rsyslog_server_real %>"
+        port="516"
+        queue.FileName="omrelp1"
+        queue.Type="LinkedList"
+        queue.MaxDiskSpace="100m"
+        queue.SaveOnShutdown="on"
+        queue.TimeoutEnqueue="100"
+        action.ResumeRetryCount="-1"
+)
+
+

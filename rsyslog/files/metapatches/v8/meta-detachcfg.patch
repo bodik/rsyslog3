@@ -1,0 +1,47 @@
+commit cbea5dc99ab911f9ef1cd0690dd777a095944e0a
+Author: root <root@took23.ics.muni.cz>
+Date:   Wed Oct 5 14:56:11 2016 +0200
+
+    meta-detachcfg.patch
+    meta example forwarding
+
+diff --git a/debian/meta-remote.conf-DISABLED b/debian/meta-remote.conf-DISABLED
+new file mode 100644
+index 0000000..07e8fa5
+--- /dev/null
++++ b/debian/meta-remote.conf-DISABLED
+@@ -0,0 +1,25 @@
++#vzdalene logovani
++$ModLoad omgssapi
++$GSSForwardServiceName host
++$gssmode encryption
++
++$ActionQueueType LinkedList        # use asynchronous processing
++$ActionQueueFileName omgssapi1      # set file name, also enables disk mode
++$ActionResumeRetryCount -1         # infinite retries on insert failure
++$ActionQueueSaveOnShutdown on      # save in-memory data if rsyslog shuts down
++$ActionQueueMaxDiskSpace 100m      # limit disk cache
++$ActionQueueTimeoutEnqueue 100     # dont block worker indefinitely when cache fills up
++*.* :omgssapi:sysel.ics.muni.cz:515
++
++#module(load="omgssapi")
++#*.* action(type="omgssapi"
++#        target="<%= rsyslog_server %>"
++#        port="515"
++#        queue.FileName="omgssapi1"
++#        queue.Type="LinkedList"
++#        queue.MaxDiskSpace="100m"
++#        queue.SaveOnShutdown="on"
++#        queue.TimeoutEnqueue="100"
++#        action.ResumeRetryCount="-1"
++#)
++
+diff --git a/debian/rsyslog.install b/debian/rsyslog.install
+index 9d09398..c3dcba7 100644
+--- a/debian/rsyslog.install
++++ b/debian/rsyslog.install
+@@ -28,3 +28,4 @@ usr/lib/rsyslog/omprog.so
+ usr/lib/rsyslog/omuxsock.so
+ usr/lib/rsyslog/pm*.so
+ lib/systemd/system/rsyslog.service
++debian/meta-remote.conf-DISABLED etc/rsyslog.d/
