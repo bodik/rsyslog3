@@ -1,0 +1,22 @@
+input(
+	type="imtcp"
+	port="47800"
+	ruleset="test"
+	SupportOctetCountedFraming="off"
+)
+
+ruleset(name="test" parser="nullparser") {
+	action( 
+		type="omhiredis"
+		server="localhost"
+		port="16379"
+		mode="queue"
+		key="test"
+		template="plain_lines"
+	
+		queue.workerthreads="1"
+		queue.dequeueBatchSize="100"
+		queue.size="10000"
+		queue.TimeoutEnqueue="10"
+	)
+}
