@@ -22,10 +22,11 @@ class rsyslog::server (
 
 	$rediser_server = undef,
 	$rediser_auto = true,
-	$rediser_service = "_rediser._tcp1",
+	$rediser_service = "_rediser._tcp",
 
 	$avahi_broadcast = true,
 ) {
+	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
 
 	class { "rsyslog::install": }
 	service { "rsyslog": ensure => running, }
@@ -39,6 +40,7 @@ class rsyslog::server (
 		"/etc/rsyslog.d/05-input-imrelp.conf",
 
 		"/etc/rsyslog.d/10-log-service-auth.conf",
+		"/etc/rsyslog.d/10-log-service-modules.conf",
 		"/etc/rsyslog.d/10-log-service-pbs.conf",
 
 		"/etc/rsyslog.d/zz_stopnonlocalhost.conf"
@@ -64,10 +66,6 @@ class rsyslog::server (
 	}
 
 	if ( $rediser_server_real ) {
-		notice($rediser_server_real)
-		notice($rediser_server_real)
-		notice($rediser_server_real)
-		notice($rediser_server_real)
 		file { "/etc/rsyslog.d/20-forwarder-rediser-syslog.conf":
 			content => template("${module_name}/etc/rsyslog.d/20-forwarder-rediser-syslog.conf.erb"),
 			owner => "root", group=> "root", mode=>"0644",

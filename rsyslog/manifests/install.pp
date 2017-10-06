@@ -1,6 +1,9 @@
 # Class will ensure installation of rsyslog packages from rsyslog metacentrum dev repository
 #
-class rsyslog::install { 
+class rsyslog::install {
+	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
+
+	$installed_version = "8.24.0.r50"
 
 	exec {"apt-get update": command => "/usr/bin/apt-get update", refreshonly => true, }
 	file { "/etc/apt/sources.list.d/meta-rsyslog.list":
@@ -15,7 +18,7 @@ class rsyslog::install {
 
 	package { "bc": ensure => installed, }
 	package { ["rsyslog", "rsyslog-gssapi", "rsyslog-relp"]:
-		ensure => "8.24.0.r50",
+		ensure => $installed_version,
 		require => [File["/etc/apt/sources.list.d/meta-rsyslog.list"], File["/etc/apt/apt.conf.d/99auth"], Exec["apt-get update"]],
 	}
 

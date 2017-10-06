@@ -6,6 +6,8 @@
 #   include rsyslog::dev
 #
 class rsyslog::dev { 
+	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
+
 	# generic build deps
 	package { ["dpkg-dev", "gcc", "make", "fakeroot", "git-buildpackage", "debhelper", "dh-autoreconf", "dh-systemd", "bison", "pkg-config", "dh-exec"]:
 		ensure => installed,

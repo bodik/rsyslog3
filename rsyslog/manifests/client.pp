@@ -22,6 +22,8 @@ class rsyslog::client (
 	$rsyslog_server_auto = true,
 	$rsyslog_server_service = "_syselgss._tcp",
 ) {
+	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
+
 	class { "rsyslog::install": }
 	service { "rsyslog": ensure => running, }
 
