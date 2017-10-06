@@ -35,7 +35,7 @@ fi
 
 MSG="selftest $(date +%s)"
 echo $MSG | nc -q0 localhost 47800
-#redis-cli -p 16379 lpop test | grep "$MSG"
+redis-cli -p 16379 lpop test | grep "$MSG"
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 rediser failed"
 fi
