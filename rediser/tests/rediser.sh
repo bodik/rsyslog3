@@ -22,12 +22,12 @@ fi
 
 
 #rediser kontrolle
-/usr/lib/nagios/plugins/check_procs --argument-array="/usr/sbin/rsyslogd -n -f /etc/rediser.conf" -c 1:1
+/usr/lib/nagios/plugins/check_procs --argument-array="/usr/bin/python /opt/rediser/rediser7.py" -c 1:
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 rediser check_procs"
 fi
 
-netstat -nlpa | grep "/rsyslogd " | grep LISTEN | grep :47800
+netstat -nlpa | grep "/python " | grep LISTEN | grep :47800
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 rediser listener"
 fi
@@ -35,6 +35,7 @@ fi
 
 MSG="selftest $(date +%s)"
 echo $MSG | nc -q0 localhost 47800
+sleep 2
 redis-cli -p 16379 lpop test | grep "$MSG"
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 rediser failed"

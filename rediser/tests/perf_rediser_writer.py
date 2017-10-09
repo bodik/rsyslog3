@@ -34,10 +34,17 @@ def writer():
 	s.connect((args.host, args.port))
 
 	i = args.batch
+	# if there's a bulk to send, we grab last message as stopper for perftest
+	if args.batch > 1:
+		i -= 1
 	while ( i != 0 ):
 		data = "".join(["{:02x}".format(ord(x)) for x in  f.read(100)])
-		s.send("perftestmessage \\n %s tmsg%d %s\n" % (args.id, count, str(data)))
+		s.send("%s perftestmessage \\n tmsg%d %s\n" % (args.id, count, str(data)))
 		i -= 1
+		count += 1
+
+	if args.batch > 1:
+		s.send("STOPSTOPSTOP %s perftestmessage \\n tmsg%d %s\n" % (args.id, count, str(data)))
 		count += 1
 
 	s.close()

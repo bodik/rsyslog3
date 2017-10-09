@@ -28,10 +28,11 @@ def teardown(signum, frame):
 
 def reader():
 	global count
+	stop = False
 
 	while True:
 		r = redis.StrictRedis(host=args.host, port=args.port)
-		while True:
+		while not stop:
 			if args.batch > 1:
 				pipe = r.pipeline()
 				for i in xrange(args.batch):
@@ -40,8 +41,13 @@ def reader():
 				for i in result:
 					if i:
 						count += 1
+						if i.startswith(args.stop):
+							stop = True
 			else:
 				print r.blpop(args.key)
+		if stop:	
+			logger.info("stop by message")
+			return
 
 
 if __name__ == "__main__":
@@ -53,6 +59,7 @@ if __name__ == "__main__":
 	parser.add_argument("--key", default="test", help="redis key to read")
 	parser.add_argument("--report", default=1, type=int, help="test id")
 	parser.add_argument("--batch", default=100, type=int, help="batch size for reading pipeline")
+	parser.add_argument("--stop", default="STOPSTOPSTOP", help="stop message")
         args = parser.parse_args()
 
 	signal.signal(signal.SIGTERM, teardown)

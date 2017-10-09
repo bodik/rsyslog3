@@ -5,6 +5,7 @@
 # @example Usage class { "rediser": }
 #
 class rediser(
+	$install_dir = "/opt/rediser",
 	$service_user = "rediser",
 	$avahi_broadcast = true,
 ) {
@@ -40,33 +41,21 @@ class rediser(
 		managehome => false,
 	}
 	
-	# we should install rsyslog rbXX version, default does not have pmnull parser
-	include rsyslog::install
-	package { "rsyslog-hiredis": ensure => "$rsyslog::install::installed_version" }
-
-	file { "/etc/rediser.d":
+	file { "${install_dir}":
 		ensure => directory,
 		owner => "root", group => "root", mode => "0755",
 	}
-	file { "/etc/rediser.conf":
-		source => "puppet:///modules/${module_name}/etc/rediser.conf",
-		owner => "root", group => "root", mode => "0644",
-		require => File["/etc/rediser.d"],
+	file { "${install_dir}/rediser7.py":
+		source => "puppet:///modules/${module_name}/opt/rediser/rediser7.py",
+		owner => "root", group => "root", mode => "0755",
+		require => File["${install_dir}"],
 		notify => Service["rediser"],
 	}
-
-	rediser::config { "/etc/rediser.d/10-test.conf": }
-
-
-
-	file { "/var/run/rediser":
-		ensure => directory,
-		owner => "${service_user}", group => "${service_user}", mode => "0755",
-	}
+		
 	file { "/etc/systemd/system/rediser.service":
 		content => template("${module_name}/rediser.service.erb"),
 		owner => "root", group => "root", mode => "0644",
-		require => [Package["rsyslog", "rsyslog-hiredis"], File["/etc/rediser.conf", "/var/run/rediser"]],
+		require => File["${install_dir}/rediser7.py"],
 		notify => Service["rediser"],
 	}
 	service { "rediser":

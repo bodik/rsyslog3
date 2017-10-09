@@ -2,10 +2,13 @@
 Description=Rediser service
 
 [Service]
-Type=notify
-ExecStart=/usr/sbin/rsyslogd -n -f /etc/rediser.conf -i /var/run/rediser/rediser.pid
-StandardOutput=null
-Restart=on-failure
+Type=no
+ExecStart=/usr/bin/python /opt/rediser/rediser7.py
+WorkingDirectory=/tmp
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=rediser
+Restart=always
 User=<%= @service_user %>
 Group=<%= @service_user %>
 
