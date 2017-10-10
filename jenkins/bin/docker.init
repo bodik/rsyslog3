@@ -1,0 +1,171 @@
+#!/bin/sh
+
+if [ -z $VMNAME ]; then
+	VMNAME="RS"
+fi
+cd /tmp || exit 1
+
+
+
+rreturn() {
+	RET=$1
+	MSG=$2
+	if [ $RET -eq 0 ]; then
+		echo "RESULT: OK $MSG"
+		exit 0
+	else
+		echo "RESULT: FAILED $MSG"
+		exit 1
+	fi
+
+	echo "RESULT: FAILED THIS SHOULD NOT HAPPEN $0 $@"
+	exit 1
+}
+
+
+
+vm_id() {
+	docker ps -a | grep "${VMNAME}$" | tail -n1 | awk '{print $1}'
+}
+
+vm_list() {
+	if [ "$1" = "-n" ]; then
+		for all in $(docker ps -a | grep -v "^CONTAINER ID" | awk '{print $1}'); do
+			docker ps -a --filter=id=$all | grep -v "^CONTAINER ID"
+			docker ps -a --filter=id=$all --format "{{.Ports}}" | grep -v "^CONTAINER ID" | sed "s/0.0.0.0/$(facter fqdn)/g"
+			docker ps -a --filter=id=$all --format "{{.Ports}}" | grep -v "^CONTAINER ID" | sed "s/0.0.0.0/$(facter ipaddress_eth0)/g"
+		done
+	else
+		docker ps -a | grep -v "^CONTAINER ID"
+	fi
+}
+
+vm_status() {
+	VMID=$(/puppet/jenkins/bin/docker.init id)
+	docker ps | grep $VMID
+	rreturn $? "$0 status"
+}
+
+
+
+vm_build() {
+	if [ -z $1 ]; then
+		TEMPLATE="debian/stretch"
+	else
+		TEMPLATE=$1
+	fi
+	docker create -P --name $VMNAME --hostname $VMNAME $TEMPLATE
+
+	sleep 5
+	rreturn $? "$0"
+}
+
+vm_start() {
+	VMID=$(/puppet/jenkins/bin/docker.init id)
+
+	docker ps | grep $VMID
+	if [ $? -eq 0 ]; then
+		rreturn $? "docker vm already running"
+	fi
+
+	docker start $VMNAME
+	if [ $? -ne 0 ]; then
+		rreturn $? "$0 start failed $VMNAME"
+	fi
+	#TODO: check up and running
+	/puppet/jenkins/bin/docker.init fixup
+	rreturn 0 "$0 start"
+}
+
+vm_fixup() {
+	echo "not implemented"
+}
+
+vm_ssh() {
+	VMID=$(/puppet/jenkins/bin/docker.init id)
+	if [ -z "$1" ]; then
+		docker exec -it $VMID bash
+	else
+		docker exec -it $VMID bash -c "$1"
+	fi
+	rreturn $? "$0 ssh $@"
+}
+
+
+
+vm_shutdown() {
+	VMID=$(/puppet/jenkins/bin/docker.init id)
+	docker stop $VMID
+	if [ $? -ne 0 ]; then
+		rreturn 1 "shutdown error"
+	fi
+
+	rreturn 0 "shutdown ok"
+}
+
+vm_destroy() {
+	VMID=$(/puppet/jenkins/bin/docker.init id)
+	if [ -z "$VMID" ]; then
+		rreturn 1 "docker id not detected"
+	fi
+	/puppet/jenkins/bin/docker.init shutdown
+	docker rm $VMID
+	rreturn $? "$0 destroy $@"
+}
+
+
+
+docker_templates() {
+	echo "not implemented"
+}
+
+
+
+case "$1" in
+	id)
+		vm_id
+	;;
+	list)
+		vm_list "$2"
+	;;
+	status)
+		vm_status
+	;;
+
+
+
+	build)
+		vm_build "$2"
+	;;
+	start)
+		vm_start "$2"
+	;;
+	fixup)
+		vm_fixup
+	;;
+	ssh)
+		vm_ssh "$2"
+	;;
+
+
+
+	shutdown)
+		vm_shutdown
+	;;
+	destroy)
+		vm_destroy
+	;;
+
+
+
+	node)
+		VMNAME=$2 /puppet/jenkins/bin/docker.init ssh "$3"
+	;;
+
+
+
+	*)
+		rreturn 1 "$0 wrong command"
+	;;
+esac
+
