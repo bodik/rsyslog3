@@ -147,7 +147,7 @@ class glog::glog2(
 
 	file { '/etc/logstash/patterns':
 		source => "puppet:///modules/${module_name}/etc/logstash/patterns",
-		owner => "root", group => "root", mode => "0755",
+		owner => "root", group => "root", mode => "0644",
 		recurse => true, purge => false,
 		require => Package["logstash"],
 		notify => Service["logstash"],
@@ -155,8 +155,6 @@ class glog::glog2(
 
 	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/10-input-udp.conf": }
 	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/11-input-tcp.conf": }
-	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/30-filter-wb.conf": }
-	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/50-output-es.conf": }
 
 	if ($redis_server) {
 		$redis_server_real = $redis_server
@@ -171,7 +169,10 @@ class glog::glog2(
 		file { "/etc/logstash/conf.d/20-input-redis-syslog.conf": ensure => absent, notify => Service["logstash"] }
 	}
 
-	
+	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/30-filter-wb.conf": }
+	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/35-filter-syslog.conf": }
+	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/50-output-es.conf": }
+
 
 
 

@@ -2,7 +2,7 @@ filter {
 	if [type] == "syslog" {
 		grok {
 			patterns_dir => "/etc/logstash/patterns"
-			match => [ "message", "%{SYSLOGLINEMETA1}" ]
+			match => [ "message", "%{SYSLOGLINEMETA2}" ]
 			overwrite => [ "message" ]
 		}
 		date {

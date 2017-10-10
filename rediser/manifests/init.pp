@@ -64,7 +64,7 @@ class rediser(
 
 	file { "${install_dir}/rediser.conf":
 		source => "puppet:///modules/${module_name}/opt/rediser/rediser.conf",
-		owner => "root", group => "root", mode => "0755",
+		owner => "root", group => "root", mode => "0644",
 		require => File["${install_dir}"],
 		notify => Service["rediser"],
 	}
