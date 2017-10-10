@@ -20,7 +20,6 @@
 class rsyslog::client (
 	$rsyslog_server = undef,
 	$rsyslog_server_auto = true,
-	$rsyslog_server_service = "_syselgss._tcp",
 ) {
 	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
 
@@ -33,7 +32,7 @@ class rsyslog::client (
 		$rsyslog_server_real = $rsyslog_server
 	} elsif ( $rsyslog_server_auto == true ) {
 		include metalib::avahi
-		$rsyslog_server_real = avahi_findservice($rsyslog_server_service)
+		$rsyslog_server_real = avahi_findservice("_syselgss._tcp")
 		notice("rsyslog_server_real discovered as ${rsyslog_server_real}")
 	}
 

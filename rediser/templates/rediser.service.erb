@@ -2,8 +2,7 @@
 Description=Rediser service
 
 [Service]
-Type=no
-ExecStart=/usr/bin/python /opt/rediser/rediser7.py
+ExecStart=/usr/bin/python /opt/rediser/rediser_master.py
 WorkingDirectory=/tmp
 StandardOutput=syslog
 StandardError=syslog
@@ -12,3 +11,5 @@ Restart=always
 User=<%= @service_user %>
 Group=<%= @service_user %>
 
+[Install]
+WantedBy=multi-user.target

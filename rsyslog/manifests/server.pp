@@ -15,14 +15,12 @@
 #
 # @param rediser_server hostname or ip to forward all logs to for analytics, has precedence over rediser_auto
 # @rediser_auto perform rediser autodiscovery by avahi
-# @rediser_service name of rediser service to discover
 class rsyslog::server ( 
 	$perhost = false,
 	$pertime = true,
 
 	$rediser_server = undef,
 	$rediser_auto = true,
-	$rediser_service = "_rediser._tcp",
 
 	$avahi_broadcast = true,
 ) {
@@ -62,7 +60,7 @@ class rsyslog::server (
 	if ($rediser_server) {
 		$rediser_server_real = $rediser_server
 	} elsif ( $rediser_auto == true ) {
-		$rediser_server_real = avahi_findservice($rediser_service)
+		$rediser_server_real = avahi_findservice("_rediser._tcp")
 	}
 
 	if ( $rediser_server_real ) {

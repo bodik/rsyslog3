@@ -55,11 +55,24 @@ class rediser(
 		require => [File["${install_dir}"], Package["python-redis", "python-hiredis"]],
 		notify => Service["rediser"],
 	}
-		
+	file { "${install_dir}/rediser_master.py":
+		source => "puppet:///modules/${module_name}/opt/rediser/rediser_master.py",
+		owner => "root", group => "root", mode => "0755",
+		require => File["${install_dir}/rediser7.py"],
+		notify => Service["rediser"],
+	}
+
+	file { "${install_dir}/rediser.conf":
+		source => "puppet:///modules/${module_name}/opt/rediser/rediser.conf",
+		owner => "root", group => "root", mode => "0755",
+		require => File["${install_dir}"],
+		notify => Service["rediser"],
+	}
+
 	file { "/etc/systemd/system/rediser.service":
 		content => template("${module_name}/rediser.service.erb"),
 		owner => "root", group => "root", mode => "0644",
-		require => File["${install_dir}/rediser7.py"],
+		require => [File["${install_dir}/rediser_master.py"], File["${install_dir}/rediser.conf"]],
 		notify => Service["rediser"],
 	}
 	service { "rediser":

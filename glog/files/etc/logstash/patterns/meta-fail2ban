@@ -1,0 +1,2 @@
+FAIL2BANACT (?:Ban|Unban)
+FAIL2BANACTION %{WORD:loglevel} \[%{WORD:jail}\] %{FAIL2BANACT:action} %{IP:remote}

@@ -183,10 +183,13 @@ if __name__ == "__main__":
 	parser.add_argument("--debug", action='store_true', default=False, help="debug")
 
         args = parser.parse_args()
+	for loggerhadler in logger.handlers:
+		loggerhadler.setFormatter(logging.Formatter("%s %s" % (args.rediskey, loggerhadler.formatter._fmt)))
 	logger.info("startup arguments: %s" % args)
 	if args.debug:
 		logger.setLevel(logging.DEBUG)
 
+	logging.info("startup")
 
 	thread_lister = Lister()
 	thread_lister.start()
@@ -210,3 +213,4 @@ if __name__ == "__main__":
 	except Exception as e:
 		logger.error(e)
 	
+	logging.info("exit")

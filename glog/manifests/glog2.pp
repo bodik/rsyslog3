@@ -13,22 +13,25 @@ class glog::glog2(
 	$cluster_name = "glog2",
 	$esd_heap_size = "1024M",
 	$esd_network_host = "127.0.0.1",
+
+	$redis_server = undef,
+	$redis_server_auto = true,
 ) {
 	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
 
 	# deps
 	ensure_resource("service", "apache2", {})
 	ensure_resource("package", "apache2", {})
-
 	package { "apt-transport-https": ensure => installed }
 	package { "openjdk-8-jdk": ensure => installed }
 
 
-	
+
+
+
+
 	# elk repos
-	if !defined(Class['apt']) {
-        	class { 'apt': }
-	}
+	ensure_resource("class", "apt", {})
 	apt::source { "elk":
 		location   => "https://artifacts.elastic.co/packages/5.x/apt",
 		release => "stable", repos => "main",
@@ -36,9 +39,6 @@ class glog::glog2(
 		key => "46095ACC8548582C1A2699A9D27D666CD88E42B4",
 		require => Package["apt-transport-https"],
 	}
-
-
-
 
 	# esd install
 	package { "elasticsearch":
@@ -76,10 +76,13 @@ class glog::glog2(
 		path => "/etc/elasticsearch/elasticsearch.yml",
 		match => "^network.host:", line => "network.host: ${esd_network_host}",
 	}
+	
 
 
 
 
+
+	# elasticsearch-head
 	# npm missing in pre-release stretch
 	apt::source { "nodejs":
 		location   => "https://deb.nodesource.com/node_6.x",
@@ -94,10 +97,6 @@ class glog::glog2(
 	}
 	file { "/usr/local/bin/node": ensure => link, target => "/usr/bin/nodejs", }
 
-
-
-
-	# elasticsearch-head
 	exec { "elasticsearch-head install":
 		command => "/bin/sh /puppet/glog/bin/elastisearch-head-install.sh",
 		creates => "/opt/elasticsearch-head/package.json",
@@ -122,12 +121,16 @@ class glog::glog2(
 
 
 
+
+
 	# elasticdump
 	exec { "install elasticdump":
 		command => "/usr/bin/npm install elasticdump -g",
 		unless => "/usr/bin/npm -g list | /usr/bin/tr -c '[:print:][:cntrl:]' '?' | /bin/grep elasticdump",
 		require => Package["nodejs"],
 	}
+	
+
 
 
 
@@ -142,21 +145,36 @@ class glog::glog2(
 		enable => true,
 	}
 
-# ????
-#	augeas { "/etc/default/logstash" :
-#		context => "/files/etc/default/logstash",
-#		changes => [
-#			"set LS_OPTS \"'-w $lsl_workers_real'\"",
-#		],
-#		require => Package["logstash"],
-#		notify => Service["logstash"],
-#	}
-
+	file { '/etc/logstash/patterns':
+		source => "puppet:///modules/${module_name}/etc/logstash/patterns",
+		owner => "root", group => "root", mode => "0755",
+		recurse => true, purge => false,
+		require => Package["logstash"],
+		notify => Service["logstash"],
+	}
 
 	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/10-input-udp.conf": }
 	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/11-input-tcp.conf": }
 	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/30-filter-wb.conf": }
 	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/50-output-es.conf": }
+
+	if ($redis_server) {
+		$redis_server_real = $redis_server
+	} elsif ( $redis_server_auto == true ) {
+		$redis_server_real = avahi_findservice("_redis._tcp")
+	}
+	if ( $redis_server_real ) {
+		notice("redis input ACTIVE")
+		glog::glog2::logstash_config_file { "/etc/logstash/conf.d/20-input-redis-syslog.conf": }
+	} else {
+		notice("redis input PASSIVE")
+		file { "/etc/logstash/conf.d/20-input-redis-syslog.conf": ensure => absent, notify => Service["logstash"] }
+	}
+
+	
+
+
+
 
 
 	# kibana
@@ -194,6 +212,8 @@ class glog::glog2(
 
 
 
+
+
 	# apache proxy
 	ensure_resource( 'lamp::apache2::a2enmod', "proxy", {} )
 	ensure_resource( 'lamp::apache2::a2enmod', "proxy_http", {} )
@@ -204,6 +224,8 @@ class glog::glog2(
 	        require => [Package["apache2"], Service["elasticsearch"], Service["kibana"]],
 		notify => Service["apache2"],
 	}
+	
+
 
 
 
@@ -251,8 +273,6 @@ class glog::glog2(
                 	require => Package["kibana"],
 	                notify => Service["kibana"],
 	} }
-
-
 
 	# Internal. Ensures logstash single config.d file
 	# 

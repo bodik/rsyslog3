@@ -1,0 +1,16 @@
+AAARESULT (?:Accepted|Failed|Authorized|identification|Invalid|disconnect|tried|refused|Postponed|failure)
+METHOD (?:[a-z\-/]+|correct key)
+PRINCIPAL [a-zA-Z0-9_/\-]+@%{HOSTNAME}
+
+AUTHN %{AAARESULT:result} %{METHOD:method} for (invalid user )?%{USER:user} from %{IPORHOST:remote} port %{POSINT} ssh2
+AUTHZ %{AAARESULT:result} to %{USER:user}, krb5 principal %{PRINCIPAL:principal} \(krb5_kuserok\)
+SCAN Did not receive %{AAARESULT:result} string from %{IPORHOST:remote}
+INVALID %{AAARESULT:result} user %{USER:user} from %{IPORHOST:remote}
+DISCONNECT Received %{AAARESULT:result} from %{IPORHOST:remote}: 11: disconnected by user
+WRONGKEY Authentication %{AAARESULT:result} for %{USER:user} with %{METHOD:method} but not from a permitted host \(host=%{IPORHOST:remote}, ip=%{IPORHOST}\)
+REFUSED %{AAARESULT:result} connect from %{IPORHOST:remote} \(%{IPORHOST:remote}\)
+PAMERR1 error: PAM: Authentication %{AAARESULT:result} for %{USER:user} from %{IPORHOST:remote}
+
+SSHATTEMPT (?:%{AUTHN}|%{AUTHZ}|%{SCAN}|%{INVALID}|%{DISCONNECT}|%{WRONGKEY}|%{REFUSED}|%{PAMERR1})
+
+SSHLINE %{SYSLOGBASEMETA2} %{SSHATTEMPT:message}
