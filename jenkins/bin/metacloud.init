@@ -65,7 +65,7 @@ vm_build() {
 	/puppet/jenkins/bin/metacloud.init destroy
 
 	if [ -z $1 ]; then
-		TEMPLATE="rsyslog3-stretch"
+		TEMPLATE="rsyslog3-stretch-manualsize"
 	else
 		TEMPLATE=$1
 	fi

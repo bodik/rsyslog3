@@ -1,4 +1,4 @@
-NAME = rsyslog3-stretch    
+NAME = rsyslog3-stretch-manualsize
 CONTEXT=[
   EMAIL="$USER[EMAIL]",
   PUBLIC_IP="$NIC[IP]",
@@ -95,5 +95,8 @@ NIFTY_APPLIANCE_TILE="Debian"
 NIFTY_VERSION="0.2.12"
 OS=[
   ARCH="x86_64" ]
+RAW=[
+  DATA="<!-- RAW data follows: --><cpu mode='host-model'></cpu> <devices><serial type='pty'><target port='0'/></serial><console type='pty'><target type='serial' port='0'/></console></devices>",
+  TYPE="kvm" ]
 SCHED_REQUIREMENTS="(HYPERVISOR=\"kvm\")"
 VCPU="2"
