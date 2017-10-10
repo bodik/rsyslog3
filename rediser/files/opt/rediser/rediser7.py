@@ -14,6 +14,10 @@ logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
 
 
+
+
+
+
 class Worker(threading.Thread):
 	def __init__(self, client, client_address, queue):
 		threading.Thread.__init__(self)
@@ -48,6 +52,9 @@ class Worker(threading.Thread):
 				line, buffer = buffer.split('\n', 1)
 				yield line
 		return
+
+
+
 
 
 
@@ -126,6 +133,7 @@ class Queue(threading.Thread):
 
 
 
+
 class Lister(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
@@ -142,6 +150,9 @@ class Lister(threading.Thread):
 					workers_lock.release()
 			logger.debug("workers: %s" % workers)
 			time.sleep(args.listerperiod)
+
+
+
 
 
 
@@ -162,6 +173,7 @@ def teardown(signum, frame):
 			time.sleep(1)
 
 	logger.info("teardown exit")
+
 
 
 if __name__ == "__main__":
@@ -188,6 +200,11 @@ if __name__ == "__main__":
 	logger.info("startup arguments: %s" % args)
 	if args.debug:
 		logger.setLevel(logging.DEBUG)
+
+
+
+
+
 
 	logging.info("startup")
 

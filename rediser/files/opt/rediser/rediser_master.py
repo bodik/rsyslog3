@@ -11,9 +11,13 @@ import sys
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
-
 selfdir = os.path.dirname(os.path.abspath(__file__))
 workerbin = "%s/rediser7.py" % selfdir
+
+
+
+
+
 
 def teardown(signum, frame):
 	logger.info("teardown start")
@@ -25,6 +29,7 @@ def teardown(signum, frame):
 		worker.wait()
 		
 	logger.info("teardown exit")
+
 
 
 if __name__ == "__main__":
@@ -41,14 +46,13 @@ if __name__ == "__main__":
 	if args.debug:
 		logger.setLevel(logging.DEBUG)
 
-
-
 	with open(args.config, "r") as f:
 		config = json.loads(f.read())
 	logging.debug("config: %s" % config)
 	if args.dry:
 		logging.info("config: %s" % config)
 		sys.exit(0)
+
 
 
 	logging.info("startup")
