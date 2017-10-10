@@ -1,4 +1,4 @@
 # rediser
 
-rsyslogd daemon spooling messages from various sources to redis queue 
+rediser daemon spooling messages from various tcp sources to redis queue 
 

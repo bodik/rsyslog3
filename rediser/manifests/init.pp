@@ -4,6 +4,9 @@
 #
 # @example Usage class { "rediser": }
 #
+# @param install_dir installation directory
+# @param service_user user running the service
+# @param avahi_broadcast mdns service broadcasting
 class rediser(
 	$install_dir = "/opt/rediser",
 	$service_user = "rediser",
@@ -40,7 +43,8 @@ class rediser(
 		home => "/var/run/rediser",
 		managehome => false,
 	}
-	
+
+	package { ["python-redis", "python-hiredis"]: ensure => installed, }	
 	file { "${install_dir}":
 		ensure => directory,
 		owner => "root", group => "root", mode => "0755",
@@ -48,7 +52,7 @@ class rediser(
 	file { "${install_dir}/rediser7.py":
 		source => "puppet:///modules/${module_name}/opt/rediser/rediser7.py",
 		owner => "root", group => "root", mode => "0755",
-		require => File["${install_dir}"],
+		require => [File["${install_dir}"], Package["python-redis", "python-hiredis"]],
 		notify => Service["rediser"],
 	}
 		

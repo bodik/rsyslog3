@@ -26,12 +26,9 @@ class Worker(threading.Thread):
 
 	def run(self):
 		logger.info("start %s" % self.name)
-		end = False
-		while not end:
-			data, end = self.readline()
-			if data:
-				self.queue.enqueue(data)
-				logger.debug("%s read \"%s\"" % (self.name, data))
+		for data in self.readlines():
+			self.queue.enqueue(data)
+			logger.debug("%s read \"%s\"" % (self.name, data))
 		self.client.close()
 		logger.info("exit %s" % self.name)
 
@@ -40,28 +37,17 @@ class Worker(threading.Thread):
 		self.client.close()
 
 
-	def readline(self):
-		""" returns string data, bool endofstream """
-		data = ""
-		tmp = bytearray(1)
-		try:
-			while True:
-				received = self.client.recv_into(tmp,1)
-				if tmp == '\n':
-					return data+tmp, False
-				elif received == 0:
-					return data, True
-				else:
-					data += tmp
+	def readlines(self, recv_buffer=4096, delim="\n"):
+		buffer = ""
+		data = True
+		while data:
+			data = self.client.recv(recv_buffer)
+			buffer += str(data.decode("utf-8"))
 
-		except Exception as e:
-			logger.error(e)
-			if data:
-				return data, True
-			else:
-				return None, True
-
-		return data, True
+			while buffer.find(delim) != -1:
+				line, buffer = buffer.split('\n', 1)
+				yield line
+		return
 
 
 
