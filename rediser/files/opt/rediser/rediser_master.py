@@ -67,7 +67,7 @@ if __name__ == "__main__":
 		workers.append(p)
 
 	for i in workers:
-		p.wait()
+		i.wait()
 
 	teardown(None, None)
 	logging.info("exit")
