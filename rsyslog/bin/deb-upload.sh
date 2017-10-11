@@ -1,3 +1,4 @@
+#!/bin/sh
 
 FRONT='bodik@esb.metacentrum.cz'
 REPO="/data/rsyslog3-packages"
