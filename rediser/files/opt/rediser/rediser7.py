@@ -42,15 +42,15 @@ class Worker(threading.Thread):
 
 
 	def readlines(self, recv_buffer=4096, delim="\n"):
-		buffer = ""
+		buf = ""
 		data = True
 		while data:
 			data = self.client.recv(recv_buffer)
-			buffer += str(data.decode("utf-8"))
+			buf += data.decode("utf-8", errors='replace')
 
-			while buffer.find(delim) != -1:
-				line, buffer = buffer.split('\n', 1)
-				yield line
+			while buf.find(delim) != -1:
+				line, buf = buf.split('\n', 1)
+				yield line.encode('unicode_escape', errors='replace')
 		return
 
 
@@ -217,6 +217,7 @@ if __name__ == "__main__":
 	signal.signal(signal.SIGINT, teardown)
 	try:
 		server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		server_socket.bind(("",args.port))
 		server_socket.listen(5)
 		while True:
