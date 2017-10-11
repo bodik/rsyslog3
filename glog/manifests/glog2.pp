@@ -40,6 +40,11 @@ class glog::glog2(
 		require => Package["apt-transport-https"],
 	}
 
+
+
+
+
+
 	# esd install
 	package { "elasticsearch":
 		ensure => installed,
@@ -81,6 +86,7 @@ class glog::glog2(
 
 
 
+	# elasticsearch utils
 
 	# elasticsearch-head
 	# npm missing in pre-release stretch
@@ -120,14 +126,17 @@ class glog::glog2(
 
 
 
-
-
-
 	# elasticdump
 	exec { "install elasticdump":
 		command => "/usr/bin/npm install elasticdump -g",
 		unless => "/usr/bin/npm -g list | /usr/bin/tr -c '[:print:][:cntrl:]' '?' | /bin/grep elasticdump",
 		require => Package["nodejs"],
+	}
+	package { "python-pip": ensure => installed }
+	exec { "install pip elasticsearch":
+		command => "/usr/bin/pip install elasticsearch",
+		unless => "/usr/bin/pip list | grep elasticsearch",
+		require => Package["python-pip"],
 	}
 	
 
