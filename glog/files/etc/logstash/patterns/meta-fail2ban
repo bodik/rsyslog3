@@ -1,2 +1,2 @@
 FAIL2BANACT (?:Ban|Unban)
-FAIL2BANACTION %{WORD:loglevel} \[%{WORD:jail}\] %{FAIL2BANACT:action} %{IP:remote}
+FAIL2BANACTION %{WORD:[f2b][loglevel]} \[%{WORD:[f2b][jail]}\] %{FAIL2BANACT:[f2b][action]} %{IP:[f2b][remote]}

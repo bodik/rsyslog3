@@ -13,7 +13,7 @@ filter {
 		}
 		if [program] =~ /^fail2ban.*/ {
 			grok {
-				add_tag => "fail2ban"
+				add_tag => "f2b"
 				patterns_dir => "/etc/logstash/patterns"
 				match => [ "message", "%{FAIL2BANACTION}" ]
 				tag_on_failure => []
@@ -30,6 +30,9 @@ filter {
                                 match => [ "message", "%{MODULESLINE}" ]
                                 tag_on_failure => []
                         }
+			mutate {
+				split => { "modulesused" => " " }
+			}
                 }
 	}
 }
