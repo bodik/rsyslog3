@@ -19,9 +19,12 @@ filter {
 				tag_on_failure => []
 			}
 			geoip {
-				source => "remote"
-				fields => ["country_code2", "country_name", "latitude", "longitude", "region_name"]
+				source => "[f2b][remote]"
+                        	fields => ["country_code2", "location"]
 			}
+			mutate {
+				rename => ["[geoip][country_code2]", "[geoip][cc]"]
+                	}
 		}
 		if [program] =~ /modules/ {
                         grok {
