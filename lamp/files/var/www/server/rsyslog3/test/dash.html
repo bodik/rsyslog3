@@ -4,6 +4,9 @@
 	<link rel="stylesheet" href="css/bootstrap-theme.min.css">
 	<script src="js/jquery-1.11.1.min.js"></script>
 	<script src="js/bootstrap.min.js"></script>
+
+	<script src="js/elasticsearch.jquery.min.js"></script>
+	<script src="js/handlebars-v4.0.10.js"></script>
 </head>
 <body>
 
@@ -33,13 +36,24 @@
 <div class="row">
         <div class="col-sm-6">
 		<div class="panel panel-default">
-			<div class="panel-heading">HaaS</div>
+			<div class="panel-heading">rsyslog3</div>
 			<div class="panel-body">
-				<ul>
-					<li><a href="/kibana/">kibana</a> </li>
-					<li><a href="/kibana/app/kibana#/discover/AV8GZjfgC3ZDTx8rWiKx">kibana alldata</a> </li>
-					<li><a href="/kibana/app/kibana#/dashboard/AV8GaiZBC3ZDTx8rWiLs">kibana alldata general dashboard</a> </li>
-				</ul>
+				<div>
+					General
+					<ul>
+						<li><a href="/kibana/">kibana</a> </li>
+					</ul>
+				</div>
+				
+				<div>
+					Searches
+					<ul id="searches"></ul>
+				</div>
+
+				<div>
+					Dashboards
+					<ul id="dashboards"></ul>
+				</div>
 			</div>
 		</div>
         </div><!-- /.col-sm-6 -->
@@ -78,6 +92,43 @@ no. CZ.1.05/3.2.00/08.0144.
 </div>
 
 </div><!-- like main content container -->
+
+
+<script id="kibana_discover" type="text/x-handlebars-template">
+<li><a href="/kibana/app/kibana#/discover/{{_id}}">{{_source.title}}</a></li>
+</script>
+<script id="kibana_dashboard" type="text/x-handlebars-template">
+<li><a href="/kibana/app/kibana#/dashboard/{{_id}}">{{_source.title}}</a></li>
+</script>
+<script>
+
+function sortbytitle(a,b) {
+	return a._source.title > b._source.title;
+}
+
+function render_discovers(err, resp, status) {
+	var template = Handlebars.compile($("#kibana_discover").html());
+	resp["hits"]["hits"].sort(sortbytitle).forEach(function(item) { $('#searches').append(template(item)); });
+}
+function render_dashboards(err, resp, status) {
+	var template = Handlebars.compile($("#kibana_dashboard").html());
+	resp["hits"]["hits"].sort(sortbytitle).forEach(function(item) { $('#dashboards').append(template(item)); });
+}
+
+function main() {
+	var kibana_dashboard = Handlebars.compile($("#kibana_dashboard").html());
+	var esduri = window.location.hostname + "/esd"
+	var client = new $.es.Client({hosts: esduri})
+
+//	client.search(
+//		{ index: '.kibana', size: 1000,	body: { "aggs": { "types": { "terms" : { "field" : "_type" } } } } },
+//		function(err,resp,status) { resp["aggregations"]["types"]["buckets"].forEach(function(item) { console.log(item); }); }
+//	);
+	client.search({ index: '.kibana', size: 1000,	q: '_type:search' }, render_discovers);
+	client.search({ index: '.kibana', size: 1000,	q: '_type:dashboard' }, render_dashboards);
+}
+main();
+</script>
 
 </body>
 </html>
