@@ -70,12 +70,6 @@ class rsyslog::server (
 			require => Class["rsyslog::install"],
 			notify => Service["rsyslog"],
 		}
-		file { "/etc/rsyslog.d/21-forwarder-rediser-auth.conf":
-			content => template("${module_name}/etc/rsyslog.d/21-forwarder-rediser-auth.conf.erb"),
-			owner => "root", group=> "root", mode=>"0644",
-			require => Class["rsyslog::install"],
-			notify => Service["rsyslog"],
-		}
 	        notice("forward rediser ACTIVE")
 	} else {
 		file { "/etc/rsyslog.d/20-forwarder-rediser-syslog.conf": ensure => absent, }
