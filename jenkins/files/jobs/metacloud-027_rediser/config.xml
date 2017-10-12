@@ -10,20 +10,19 @@
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
   <triggers/>
-  <concurrentBuild>true</concurrentBuild>
+  <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>export VMNAME=&quot;RDEVCLIENTX&quot;
+      <command>export VMNAME=&quot;RS-test&quot;
 /puppet/jenkins/bin/metacloud.init build
 /puppet/jenkins/bin/metacloud.init start
 /puppet/jenkins/bin/metacloud.init ssh &apos;wget https://rsyslog.metacentrum.cz/rsyslog3.git/bootstrap.install.sh &amp;&amp; sh -x bootstrap.install.sh&apos;
-############
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh phase2.install.sh&apos;
-/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh metalib/tests/phase2.sh&apos;
 
-/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh rsyslog-dev.install.sh&apos;
-/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh rsyslog/bin/deb-make.sh&apos;
-</command>
+/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh rediser.install.sh&apos;
+/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh -x rediser/tests/rediser.sh&apos;
+
+/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; time sh rediser/tests/perf_test_rediser.sh -c 1000000&apos;</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers/>
