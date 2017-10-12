@@ -28,7 +28,7 @@ class rsyslog::client (
 
 
 
-	if ( $rediser_server ) {
+	if ( $rsyslog_server ) {
 		$rsyslog_server_real = $rsyslog_server
 	} elsif ( $rsyslog_server_auto == true ) {
 		include metalib::avahi
