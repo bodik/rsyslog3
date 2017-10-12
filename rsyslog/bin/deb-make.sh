@@ -8,10 +8,10 @@ if [ ! -d collab-maint-rsyslog ]; then
 	# ?? set for fetch from origin 'git config remote.origin.fetch 'refs/heads/*:refs/heads/*'' to be able to fetch from upstream 'git fetch --all'
 	# after each fetch 'git update-server-info' run
 	# enable hooks/post-update for https
-	git clone http://esb.metacentrum.cz/collab-maint-rsyslog.git
+	git clone https://rsyslog.metacentrum.cz/collab-maint-rsyslog.git
 
 	cd collab-maint-rsyslog
-	git remote set-url origin --push bodik@esb.metacentrum.cz:/data/collab-maint-rsyslog.git
+	git remote set-url origin --push bodik@rsyslog.metacentrum.cz:/data/collab-maint-rsyslog.git
 else
 	cd collab-maint-rsyslog
 	git pull

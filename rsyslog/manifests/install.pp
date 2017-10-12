@@ -5,10 +5,12 @@ class rsyslog::install {
 
 	$installed_version = "8.24.0.r50"
 
+	package { "apt-transport-https": ensure => installed }
 	exec {"apt-get update": command => "/usr/bin/apt-get update", refreshonly => true, }
 	file { "/etc/apt/sources.list.d/meta-rsyslog.list":
 	        source => "puppet:///modules/rsyslog/etc/apt/sources.list.d/meta-rsyslog.list",
         	owner => "root", group => "root", mode => "0644",
+		require => Package["apt-transport-https"],
 	        notify => Exec["apt-get update"],
 	}
 	file { "/etc/apt/apt.conf.d/99auth":       
