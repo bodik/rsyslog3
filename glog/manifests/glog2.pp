@@ -163,7 +163,6 @@ class glog::glog2(
 	}
 
 	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/10-input-udp.conf": }
-	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/11-input-tcp.conf": }
 
 	if ($redis_server) {
 		$redis_server_real = $redis_server
@@ -178,8 +177,11 @@ class glog::glog2(
 		file { "/etc/logstash/conf.d/20-input-redis-syslog.conf": ensure => absent, notify => Service["logstash"] }
 	}
 
-	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/30-filter-wb.conf": }
-	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/35-filter-syslog.conf": }
+	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/30-filter-syslog.conf": }
+	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/35-filter-syslog-f2b.conf": }
+	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/35-filter-syslog-modules.conf": }
+	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/35-filter-syslog-sshd.conf": }
+
 	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/50-output-es.conf": }
 
 

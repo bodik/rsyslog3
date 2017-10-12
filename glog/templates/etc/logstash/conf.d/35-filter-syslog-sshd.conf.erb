@@ -1,0 +1,27 @@
+filter {
+	if [type] == "syslog" {
+		if [program] == "sshd" {
+			grok {
+				add_tag => "sshd"
+				patterns_dir => "/etc/logstash/patterns/"
+				match => [ "message", "%{SSHDMESSAGE}" ]
+			}
+			geoip {
+				source => "[auth][remote]"
+	                        fields => ["country_code2", "location"]
+			}
+	                mutate {
+				rename => ["[geoip][country_code2]", "[geoip][cc]"]
+				add_field => { "[auth][hostname]" => "%{[auth][remote]}" }
+			}
+			dns {
+				reverse => [ "[auth][hostname]" ]
+				action => "replace"
+				hit_cache_size => 5000
+				hit_cache_ttl => 3600
+				failed_cache_size => 5000
+				failed_cache_ttl => 3600
+			}
+		}
+	}
+}

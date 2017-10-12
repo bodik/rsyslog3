@@ -1,0 +1,15 @@
+filter {
+	if [type] == "syslog" {
+		if [program] == "modules" {
+                        grok {
+                                add_tag => "modules"
+                                patterns_dir => "/etc/logstash/patterns"
+                                match => [ "message", "%{MODULESLINE}" ]
+                                tag_on_failure => []
+                        }
+			mutate {
+				split => { "modulesused" => " " }
+			}
+                }
+	}
+}
