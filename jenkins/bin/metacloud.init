@@ -85,7 +85,7 @@ vm_start() {
 	case "$STATE" in
 		hold) onevm release $VMID ;;
 		poff) onevm resume $VMID ;;
-		runn) rreturn 0 "vm already running" ;;
+		runn|prol|boot) rreturn 0 "vm already running" ;;
 		*) rreturn 1 "vm unknown state $STATE" ;;
 	esac
 
