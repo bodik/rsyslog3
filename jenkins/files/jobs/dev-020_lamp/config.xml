@@ -22,6 +22,9 @@
 
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh phase2.install.sh&apos;
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh metalib/tests/phase2.sh&apos;
+
+/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh lamp.install.sh&apos;
+/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh lamp/tests/lamp.sh&apos;
 </command>
     </hudson.tasks.Shell>
   </builders>
