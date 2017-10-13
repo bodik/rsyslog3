@@ -247,17 +247,18 @@ case "$1" in
 	;;
 
 
-#	sshs)
-#		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "RS-"|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
-#	;;
+	sshs)
+		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "RS-test"|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
+	;;
+	sshdev)
+		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "RDEVCLIENTX"|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
+	;;
+
 #	sshc)
 #		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "RC-"|head -1|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
 #	;;
 #	sshe)
 #		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "ELK-"|head -1|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
-#	;;
-#	sshdev)
-#		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "RDEVCLIENTX"|head -1|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
 #	;;
 #	update)
 #		metacloud_update
