@@ -8,7 +8,6 @@ COUNT=11
 DISRUPT="none"
 CLOUD="metacloud"
 
-rreturn() { echo "$2"; exit $1; }
 usage() { echo "Usage: $0 [-t <TESTID>] [-c <COUNT>] [-d <DISRUPT>] [-f <CLOUD>]" 1>&2; exit 1; }
 while getopts "t:c:d:f:" o; do
 	case "${o}" in
@@ -24,50 +23,67 @@ CLOUDBIN="/puppet/jenkins/bin/${CLOUD}.init"
 
 
 
+
+
+
 ################# MAIN
 
-VMLIST=$(${CLOUDBIN} list | grep "RS-" | awk '{print $4}' | grep -v "^$")
+echo "INFO: begin test setup"
 
-# gather test info
-VMCOUNT=0
-for all in $VMLIST; do
-	echo "INFO: client $all config"
-	VMNAME=$all ${CLOUDBIN} ssh "dpkg -l rsyslog; cat /etc/rsyslog.d/meta-remote.conf" 2>&1 | sed "s/^/$all /"
-	VMCOUNT=$(($VMCOUNT+1))
+NODES=$(${CLOUDBIN} list | grep "RC-" | awk '{print $4}' | grep -v "^$")
+
+for all in $NODES; do
+	VMNAME=$all ${CLOUDBIN} ssh "cd /puppet && sh bootstrap.install.sh 1>/dev/null 2>/dev/null" &
 done
-echo "INFO: VMCOUNT $VMCOUNT"
-echo "INFO: VMLIST $VMLIST"
+wait
+
+NODESCOUNT=0
+for all in $NODES; do
+	echo "INFO: node $all config"
+	VMNAME=$all ${CLOUDBIN} ssh "dpkg -l rsyslog | tail -n1; cat -n /etc/rsyslog.d/meta-remote.conf" 2>&1 | sed "s/^/$all /"
+	NODESCOUNT=$(($NODESCOUNT+1))
+done
+
+echo "INFO: nodescount $NODESCOUNT"
 
 
-exit 0
 
-#reconnect all clients
+echo "INFO: reconnecting all nodes"
+
 ${CLOUDBIN} sshs 'service rsyslog stop'
 ${CLOUDBIN} sshs 'service rsyslog start'
-for all in $VMLIST; do
-	echo "INFO: client $all restart"
-	VMNAME=$all ${CLOUDBIN} ssh "service rsyslog restart"
+for all in $NODES; do
+	echo "INFO: node $all rsyslog restart"
+	VMNAME=$all ${CLOUDBIN} ssh "service rsyslog restart" &
 done
+wait
 sleep 10
-CONNS=$(${CLOUDBIN} sshs 'netstat -nlpa | grep rsyslog | grep ESTA | awk "{print \$4}" | grep "51[456]" | wc -l' | head -n1)
-if [ $CONNS -ne $VMCOUNT ]; then
-	rreturn 1 "$0 missing clients on startup"
+
+${CLOUDBIN} sshs 'netstat -nlpa | grep rsyslog | grep ESTA | grep ":51[456] "'
+CONNS=$(${CLOUDBIN} sshs 'netstat -nlpa | grep rsyslog | grep ESTA | grep ":51[456] " | wc -l' | head -n1)
+echo "INFO: connected nodes ${CONNS}"
+if [ $CONNS -ne $NODESCOUNT ]; then
+	rreturn 1 "$0 missing nodes on startup"
 fi
 
-exit 0
+echo "INFO: end test setup"
 
 
 
-for all in $VMLIST; do
-	echo "INFO: client $all testi.sh init"
-	VMNAME=$all ${CLOUDBIN} ssh "(sh /puppet/rsyslog/test03/testi.sh -t ${TESTID} -c ${COUNT} </dev/null 1>/dev/null 2>/dev/null)" &
+
+
+
+echo "INFO: begin test body"
+
+for all in $NODES; do
+	echo "INFO: node $all testi.sh init"
+	VMNAME=$all ${CLOUDBIN} ssh "/puppet/rsyslog/test03/testi.sh -t ${TESTID} -c ${COUNT} </dev/null 1>/dev/null 2>/dev/null" &
 done
 
-###
-###
-#### VYNUCOVANI CHYB
-###WAITRECOVERY=60
-###
+
+# disrupts
+WAITRECOVERY=60
+
 ###case $DISRUPT in
 ###
 ###
@@ -139,57 +155,31 @@ done
 ###
 ###esac
 
-echo "INFO: waiting for clients to finish"
+echo "INFO: waiting for nodes to finish"
 wait
-echo "INFO: test finished"
+echo "INFO: nodes finished"
 
-
-
-
-
-
-# CEKANI NA DOTECENI VYSLEDKU
-WAITRECOVERY=60
 echo "INFO: waiting to sync for $WAITRECOVERY secs"
 count $WAITRECOVERY
 
+echo "INFO: end test body"
 
 
 
 
-# VYHODNOCENI VYSLEDKU
-for all in $VMLIST; do
-	CLIENT=$( VMNAME=$all /puppet/jenkins/bin/$CLOUD.init ssh 'facter ipaddress' |grep -v "RESULT")
-	/puppet/jenkins/bin/$CLOUD.init sshs "sh /puppet/rsyslog/test02/results_client.sh $LEN $TESTID $CLIENT" | grep "RESULT TEST NODE:" | tee -a /tmp/test_results.$TESTID.log
+
+
+echo "INFO: begin test result"
+
+## test results
+for all in $NODES; do
+	NODEIP=$(VMNAME=$all ${CLOUDBIN} ssh 'facter ipaddress' | head -n1)
+	${CLOUDBIN} sshs "/puppet/rsyslog/test03/result_client.py -n ${NODEIP} -t ${TESTID} -c ${COUNT} 1>>/tmp/test_results.${TESTID}.log 2>&1"
 done
-echo =============
-
-awk -v LEN=$LEN -v VMCOUNT=$VMCOUNT -v TESTID=$TESTID -v DISRUPT=$DISRUPT ' 
-BEGIN {
-	DELIVERED=0;
-	DELIVEREDUNIQ=0;
-	TOTALLEN=LEN*VMCOUNT;
-}
-//{
-	DELIVERED = DELIVERED + $10;
-	DELIVEREDUNIQ = DELIVEREDUNIQ + $14;
-}
-END {
-	PERC=DELIVERED/(TOTALLEN/100);
-	PERCUNIQ=DELIVEREDUNIQ/(TOTALLEN/100);
-	if(PERCUNIQ >= 99.0 && PERCUNIQ <= 100 ) {
-		RES="OK";
-		RET=0;
-	} else {
-		RES="FAILED";
-		RET=1;
-	}
-	print "RESULT TEST FINAL:",RES,TESTID,"disrupt",DISRUPT,"totallen",TOTALLEN,"deliv",DELIVERED,"rate",PERC"%","delivuniq",DELIVEREDUNIQ,"rateuniq",PERCUNIQ"%";
-	exit RET
-}' /tmp/test_results.$TESTID.log
+${CLOUDBIN} sshs "cat /tmp/test_results.${TESTID}.log"
+${CLOUDBIN} sshs "/puppet/rsyslog/test03/result_test.py -t ${TESTID} -c ${COUNT} -n ${NODESCOUNT} -D ${DISRUPT} -l /tmp/test_results.${TESTID}.log --debug"
 RET=$?
 
-rm /tmp/test_results.$TESTID.log
+echo "INFO: end test result"
 
 rreturn $RET "$0"
-
