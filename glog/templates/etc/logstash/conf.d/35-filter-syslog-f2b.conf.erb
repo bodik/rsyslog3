@@ -7,21 +7,23 @@ filter {
 				match => [ "message", "%{FAIL2BANACTION}" ]
 				tag_on_failure => []
 			}
-			geoip {
-				source => "[f2b][remote]"
-                        	fields => ["country_code2", "location"]
-			}
-			mutate {
-				rename => ["[geoip][country_code2]", "[geoip][cc]"]
-				add_field => { "[f2b][hostname]" => "%{[f2b][remote]}" }
-                	}
-			dns {
-				reverse => [ "[f2b][hostname]" ]
-				action => "replace"
-				hit_cache_size => 5000
-				hit_cache_ttl => 3600
-				failed_cache_size => 5000
-				failed_cache_ttl => 3600
+			if ([f2b][remote]) {
+				geoip {
+					source => "[f2b][remote]"
+	                        	fields => ["country_code2", "location"]
+				}
+				mutate {
+					rename => ["[geoip][country_code2]", "[geoip][cc]"]
+					add_field => { "[f2b][hostname]" => "%{[f2b][remote]}" }
+	                	}
+				dns {
+					reverse => [ "[f2b][hostname]" ]
+					action => "replace"
+					hit_cache_size => 5000
+					hit_cache_ttl => 3600
+					failed_cache_size => 5000
+					failed_cache_ttl => 3600
+				}
 			}
 		}
 	}
