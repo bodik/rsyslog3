@@ -1,11 +1,10 @@
 #!/usr/bin/python
 
 import argparse
-import datetime
-import glob
 import json
 import logging
 import re
+import sys
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
@@ -13,9 +12,11 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument("-n", "--node", required=True, help="client name")
 	parser.add_argument("-t", "--testid", required=True, help="testid")
 	parser.add_argument("-c", "--count", type=int, required=True, help="count")
+	parser.add_argument("-n", "--nodes", type=int, required=True, help="nodes count")
+	parser.add_argument("-D", "--disrupt", required=True, help="disrupt")
+	parser.add_argument("-l", "--logfile", required=True, help="logfile")
 	parser.add_argument("-d", "--debug", action='store_true', default=False, help="debug")
         args = parser.parse_args()
 	if args.debug:
@@ -24,34 +25,36 @@ if __name__ == "__main__":
 
 
 
-	logfiles = glob.glob(datetime.datetime.now().strftime("/var/log/hosts/%Y/%m/*/syslog*"))
-	matcher = re.compile(" %s .*logger: %s (tmsg.*)" % (args.node, args.testid))
-	messages = []
-	for logfile in logfiles:
-		with open(logfile, "r") as f:
-			for line in f:
-				match = matcher.search(line)
-				if match:
-					messages.append(match.group(1))
+	delivered = 0
+	delivered_unique = 0
+	with open(args.logfile, "r") as f:
+		for line in f:
+			m = re.search("RESULT TEST NODE: (.*)", line)
+			if m:
+				data = json.loads(m.group(1))
+				delivered += data["delivered"]
+				delivered_unique += data["delivered_unique"]
 
 
 
-	delivered = len(messages)
-	delivered_unique = len(list(set(messages)))
-	delivered_rate = delivered / (args.count / 100.0)
-	delivered_unique_rate = delivered_unique / (args.count / 100.0)
+	total_count = args.count * args.nodes
+	delivered_rate = delivered / (total_count / 100.0)
+	delivered_unique_rate = delivered_unique / (total_count / 100.0)
 	if ( (delivered_unique_rate >= 99.9) and (delivered_unique_rate <= 100.0) ):
 		result = "OK"
+		ret = 0
 	else:
 		result = "FAILED"
+		ret = 1
 	results = {
 		"result": result,
 		"testid": args.testid,
-		"node": args.node,
-		"total": args.count,
+		"disrupt": args.disrupt,
+		"total_count": total_count,
 		"delivered": delivered,
 		"delivered_rate": delivered_rate,
 		"delivered_unique": delivered_unique,
 		"delivered_unique_rate": delivered_unique_rate
 	}
-	logger.info("RESULT TEST NODE: %s" % json.dumps(results, sort_keys=True))
+	logger.info("RESULT TEST TOTAL: %s" % json.dumps(results, sort_keys=True))
+	sys.exit(ret)
