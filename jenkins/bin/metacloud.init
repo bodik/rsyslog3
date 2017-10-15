@@ -186,12 +186,6 @@ metacloud_templates() {
 }
 
 
-#used for rsyslog/test02
-#metacloud_update() {
-#	for all in $(/puppet/jenkins/bin/metacloud.init list|grep "R[CS]-"| awk '{print $4}'); do
-#		VMNAME=$all /puppet/jenkins/bin/metacloud.init ssh 'cd /puppet && sh bootstrap.install.sh'
-#	done
-#}
 
 
 
@@ -253,16 +247,11 @@ case "$1" in
 	sshdev)
 		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "RDEVCLIENTX"|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
 	;;
-
-#	sshc)
-#		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "RC-"|head -1|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
-#	;;
-#	sshe)
-#		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "ELK-"|head -1|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
-#	;;
-#	update)
-#		metacloud_update
-#	;;
+	all)
+		for all in $(/puppet/jenkins/bin/metacloud.init list | grep "$2" | awk '{print $4}'); do
+			VMNAME=$all /puppet/jenkins/bin/metacloud.init ssh "$3"
+		done
+	;;
 
 
 
