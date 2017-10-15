@@ -77,55 +77,43 @@ echo "INFO: begin test body"
 
 for all in $NODES; do
 	echo "INFO: node $all testi.sh init"
-	VMNAME=$all ${CLOUDBIN} ssh "/puppet/rsyslog/test03/testi.sh -t ${TESTID} -c ${COUNT} </dev/null 1>/dev/null 2>/dev/null" &
+	VMNAME=$all ${CLOUDBIN} ssh "/puppet/rsyslog/test03/test_run.sh -t ${TESTID} -c ${COUNT} </dev/null 1>/dev/null 2>/dev/null" &
 done
 
 
 # disrupts
 WAITRECOVERY=60
 
-###case $DISRUPT in
-###
-###
-###	tcpkill)
-###(
-###sleep 10;
-###TIMER=240
-###echo "INFO: tcpkill begin $TIMER";
-###/puppet/jenkins/bin/$CLOUD.init sshs "cd /puppet/rsyslog/test02;
-###./tcpkill -i eth0 port 515 or port 514 or port 516 2>/dev/null &
-###PPP=\$!; 
-###sleep $TIMER;
-###kill \$PPP;
-###"
-###echo "INFO: tcpkill end $TIMER";
-###)
-###WAITRECOVERY=230
-###;;
-###
-###
-###	restart)
-###(
-###sleep 10; 
-###echo "INFO: restart begin";
-###/puppet/jenkins/bin/$CLOUD.init sshs 'service rsyslog restart'
-###echo "INFO: restart end";
-###)
-###WAITRECOVERY=230
-###;;
-###
-###
-###	killserver)
-###(
-###sleep 10; 
-###echo "INFO: killserver begin";
-###/puppet/jenkins/bin/$CLOUD.init sshs 'kill -9 `pidof rsyslogd`'
-###/puppet/jenkins/bin/$CLOUD.init sshs 'service rsyslog restart'
-###echo "INFO: killserver end";
-###)
-###WAITRECOVERY=230
-###;;
-###
+case $DISRUPT in
+
+	restart)
+		sleep 10
+		echo "INFO: restart begin"
+		${CLOUDBIN} sshs 'service rsyslog restart'
+		echo "INFO: restart end"
+		WAITRECOVERY=230
+	;;
+
+
+	killserver)
+		sleep 10
+		echo "INFO: killserver begin"
+		${CLOUDBIN} sshs 'kill -9 `pidof rsyslogd`'
+		${CLOUDBIN} sshs 'service rsyslog restart'
+		echo "INFO: killserver end"
+		WAITRECOVERY=230
+	;;
+
+	tcpkill)
+		sleep 10
+		echo "INFO: tcpkill begin";
+		${CLOUDBIN} sshs "/usr/bin/timeout 180 /puppet/rsyslog/test03/tcpkill -i eth0 port 515 or port 514 or port 516 2>/dev/null || /bin/true"
+		echo "INFO: tcpkill end"
+		WAITRECOVERY=230
+	;;
+
+esac
+
 ###
 ###	ipdrop)
 ###(
@@ -160,7 +148,7 @@ wait
 echo "INFO: nodes finished"
 
 echo "INFO: waiting to sync for $WAITRECOVERY secs"
-count $WAITRECOVERY
+countdown $WAITRECOVERY
 
 echo "INFO: end test body"
 
