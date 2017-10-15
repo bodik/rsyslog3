@@ -15,15 +15,15 @@ rreturn() {
 	exit 1
 }
 
-count() {
+countdown() {
 	TIMER=$1
+	echo "INFO: begin countdown"
 	while [ $TIMER -gt 0 ]; do
-        	echo -n $TIMER;
-	        sleep 1
-	        echo -n $'\b\b\b';
+		if [ $(($TIMER % 30)) -eq 0 ]; then echo "DEBUG: countdown $TIMER"; fi
 		TIMER=$(($TIMER-1))
+	        sleep 1
 	done
-	echo "INFO: counter finished"
+	echo "INFO: end countdown"
 }
 
 checkzero() {
