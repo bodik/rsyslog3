@@ -18,6 +18,7 @@
 # @param rsyslog_server_auto perform rsyslog server autodiscovery by avahi (defult true)
 # @param rsyslog_server_service name of rsyslog server service to discover (default "_syselgss._tcp")
 class rsyslog::client (
+	$forward_type = undef,
 	$rsyslog_server = undef,
 	$rsyslog_server_auto = true,
 ) {
@@ -37,10 +38,15 @@ class rsyslog::client (
 	}
 
 	if ( $rsyslog_server_real ) {
-		if file_exists ("/etc/krb5.keytab") == 0 {
-			$forward_template = "${module_name}/etc/rsyslog.d/meta-remote-omrelp.conf.erb"
+
+		if ( $forward_type ) {
+			$forward_template = "${module_name}/etc/rsyslog.d/meta-remote-${forward_type}.conf.erb"
 		} else {
-			$forward_template = "${module_name}/etc/rsyslog.d/meta-remote-omgssapi.conf.erb"
+			if ( file_exists("/etc/krb5.keytab") == 0 ) {
+				$forward_template = "${module_name}/etc/rsyslog.d/meta-remote-omrelp.conf.erb"
+			} else {
+				$forward_template = "${module_name}/etc/rsyslog.d/meta-remote-omgssapi.conf.erb"
+			}
 		}
 		file { "/etc/rsyslog.d/meta-remote.conf":
 			content => template($forward_template),
