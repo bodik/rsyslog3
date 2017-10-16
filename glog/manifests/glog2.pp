@@ -172,9 +172,11 @@ class glog::glog2(
 	if ( $redis_server_real ) {
 		notice("redis input ACTIVE")
 		glog::glog2::logstash_config_file { "/etc/logstash/conf.d/20-input-redis-syslog.conf": }
+		glog::glog2::logstash_config_file { "/etc/logstash/conf.d/21-input-redis-json.conf": }
 	} else {
 		notice("redis input PASSIVE")
 		file { "/etc/logstash/conf.d/20-input-redis-syslog.conf": ensure => absent, notify => Service["logstash"] }
+		file { "/etc/logstash/conf.d/21-input-redis-json.conf": ensure => absent, notify => Service["logstash"] }
 	}
 
 	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/30-filter-syslog.conf": }

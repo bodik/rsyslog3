@@ -4,6 +4,7 @@ import argparse
 import json
 import logging
 import re
+import socket
 import sys
 
 logger = logging.getLogger()
@@ -62,4 +63,13 @@ if __name__ == "__main__":
 		"delivered_unique_rate": delivered_unique_rate
 	}
 	logger.info("RESULT TEST TOTAL: %s" % json.dumps(results, sort_keys=True))
+
+	try:
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.connect(("localhost", 47802))
+		s.send( "%s\n" % json.dumps(results, sort_keys=True) )
+		s.close()
+	except Exception as e:
+		logger.warning(e)
+
 	sys.exit(ret)

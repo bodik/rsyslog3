@@ -1,0 +1,12 @@
+input {
+	redis {
+		data_type => "list"
+		host => "<%= scope.lookupvar('glog::glog2::redis_server_real') %>"
+		key => "json"
+		port => 16379
+		type => "json"
+		threads => 1
+		batch_count => 100
+		codec => json {}
+  	}
+}
