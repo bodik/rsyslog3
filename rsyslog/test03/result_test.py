@@ -51,17 +51,20 @@ if __name__ == "__main__":
 		result = "FAILED"
 		ret = 1
 	results = {
-		"result": result,
-		"testid": args.testid,
-		"disrupt": args.disrupt,
-		"forward_type": args.forwardtype,
-		"nodes": nodes,
-		"nodes_count": len(nodes),
-		"total_count": total_count,
-		"delivered": delivered,
-		"delivered_rate": delivered_rate,
-		"delivered_unique": delivered_unique,
-		"delivered_unique_rate": delivered_unique_rate
+		"message": "rsyslog test03 results",
+		"rstest": {
+			"result": result,
+			"testid": args.testid,
+			"disrupt": args.disrupt,
+			"forward_type": args.forwardtype,
+			"nodes": nodes,
+			"nodes_count": len(nodes),
+			"total_count": total_count,
+			"delivered": delivered,
+			"delivered_rate": delivered_rate,
+			"delivered_unique": delivered_unique,
+			"delivered_unique_rate": delivered_unique_rate
+		}
 	}
 	logger.info("RESULT TEST TOTAL: %s" % json.dumps(results, sort_keys=True))
 
