@@ -19,8 +19,8 @@ class krb5::user(
 	package { "krb5-user": ensure => installed, }
 
 
-	exec { "get_keytab":
-		command => "/bin/sh /puppet/krb5/bin/get_keytab.sh",
+	exec { "getkeytab":
+		command => "/bin/sh /puppet/krb5/bin/getkeytab.sh",
 		creates => "/etc/krb5.keytab",
 	}
 }
