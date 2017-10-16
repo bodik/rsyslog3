@@ -29,8 +29,8 @@ echo "INFO: test precheck"
 /usr/lib/nagios/plugins/check_procs --argument-array="${SELFDIR}/perf_redis_reader.py" -c 0:0 || rreturn 1 "$0 perf_redis_reader.rb check_procs already running"
 /usr/lib/nagios/plugins/check_procs --argument-array="${SELFDIR}/perf_rediser_writer.py" -c 0:0 || rreturn 1 "$0 perf_rediser_writer.rb check_procs already running"
 
-redis-cli --no-raw -p 16379 llen test | grep '(integer) 0'
-if [ $? -ne 0 ]; then
+QUEUELEN="$(/puppet/rediser/bin/redis.sh llen test)"
+if [ $QUEUELEN -ne 0 ]; then
 	rreturn 1 "$0 queue not empty"
 fi
 

@@ -9,13 +9,8 @@ if [ $? -ne 0 ]; then
 	rreturn 1 "$0 redis-server check_procs"
 fi
 
-redis-cli -p 16379 script load "return 1"
-if [ $? -ne 0 ]; then
-	rreturn 1 "$0 redis-server version not sufficient"
-fi
-
-echo "rpush test_rediser.sh test_rediser.sh-$$" | redis-cli -p 16379 1>/dev/null
-echo "lpop test_rediser.sh" | redis-cli -p 16379 | grep "test_rediser.sh-$$" 1>/dev/null
+echo "rpush test_rediser.sh test_rediser.sh-$$" | /puppet/rediser/bin/redis.sh 1>/dev/null
+echo "lpop test_rediser.sh" | /puppet/rediser/bin/redis.sh | grep "test_rediser.sh-$$" 1>/dev/null
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 redis-server rpush/lpop failed"
 fi
@@ -36,7 +31,7 @@ fi
 MSG="selftest $(date +%s)"
 echo $MSG | nc -q0 localhost 47800
 sleep 2
-redis-cli -p 16379 lpop test | grep "$MSG"
+/puppet/rediser/bin/redis.sh lpop test | grep "$MSG"
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 rediser failed"
 fi
