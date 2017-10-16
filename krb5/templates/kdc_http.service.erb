@@ -1,0 +1,13 @@
+[Unit]
+Description=kdc_http service
+
+[Service]
+ExecStart=/usr/bin/python /opt/kdc_http/kdc_http.py
+WorkingDirectory=/tmp
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=kdc_http
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
