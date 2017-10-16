@@ -16,6 +16,7 @@ if __name__ == "__main__":
 	parser.add_argument("-c", "--count", type=int, required=True, help="count")
 	parser.add_argument("-n", "--nodes", type=int, required=True, help="nodes count")
 	parser.add_argument("-D", "--disrupt", required=True, help="disrupt")
+	parser.add_argument("-f", "--forwardtype", required=True, help="forward type")
 	parser.add_argument("-l", "--logfile", required=True, help="logfile")
 	parser.add_argument("-d", "--debug", action='store_true', default=False, help="debug")
         args = parser.parse_args()
@@ -27,6 +28,7 @@ if __name__ == "__main__":
 
 	delivered = 0
 	delivered_unique = 0
+	nodes = []
 	with open(args.logfile, "r") as f:
 		for line in f:
 			m = re.search("RESULT TEST NODE: (.*)", line)
@@ -34,6 +36,7 @@ if __name__ == "__main__":
 				data = json.loads(m.group(1))
 				delivered += data["delivered"]
 				delivered_unique += data["delivered_unique"]
+				nodes += [data["node"]]
 
 
 
@@ -50,6 +53,8 @@ if __name__ == "__main__":
 		"result": result,
 		"testid": args.testid,
 		"disrupt": args.disrupt,
+		"forward_type": args.forwardtype,
+		"nodes": nodes,
 		"total_count": total_count,
 		"delivered": delivered,
 		"delivered_rate": delivered_rate,

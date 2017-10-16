@@ -6,15 +6,16 @@ set -e
 TESTID="ti$(date +%s)"
 COUNT=11
 DISRUPT="none"
+FORWARD_TYPE="omfwd"
 CLOUD="metacloud"
 
-usage() { echo "Usage: $0 [-t <TESTID>] [-c <COUNT>] [-d <DISRUPT>] [-f <CLOUD>]" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-t <TESTID>] [-c <COUNT>] [-d <DISRUPT>] [-f <FORWARD_TYPE>]" 1>&2; exit 1; }
 while getopts "t:c:d:f:" o; do
 	case "${o}" in
         	t) TESTID=${OPTARG} ;;
         	c) COUNT=${OPTARG} ;;
         	d) DISRUPT=${OPTARG} ;;
-        	f) CLOUD=${OPTARG} ;;
+        	f) FORWARD_TYPE=${OPTARG} ;;
 		*) usage ;;
 	esac
 done
@@ -31,17 +32,15 @@ CLOUDBIN="/puppet/jenkins/bin/${CLOUD}.init"
 echo "INFO: begin test setup"
 
 NODES=$(${CLOUDBIN} list | grep "RC-" | awk '{print $4}' | grep -v "^$")
-
-for all in $NODES; do
-	VMNAME=$all ${CLOUDBIN} ssh "cd /puppet && sh bootstrap.install.sh 1>/dev/null 2>/dev/null" &
-done
-wait
-
 NODESCOUNT=0
+for all in $NODES; do NODESCOUNT=$(($NODESCOUNT+1)); done
+
+${CLOUDBIN} all 'RC-' "cd /puppet && sh bootstrap.install.sh 1>/dev/null 2>/dev/null"
+${CLOUDBIN} all 'RC-' "pa.sh -e 'class { \"rsyslog::client\": forward_type=>\"$FORWARD_TYPE\"}'"
+
 for all in $NODES; do
 	echo "INFO: node $all config"
 	VMNAME=$all ${CLOUDBIN} ssh "dpkg -l rsyslog | tail -n1; cat -n /etc/rsyslog.d/meta-remote.conf" 2>&1 | sed "s/^/$all /"
-	NODESCOUNT=$(($NODESCOUNT+1))
 done
 
 echo "INFO: nodescount $NODESCOUNT"
@@ -52,11 +51,7 @@ echo "INFO: reconnecting all nodes"
 
 ${CLOUDBIN} sshs 'service rsyslog stop'
 ${CLOUDBIN} sshs 'service rsyslog start'
-for all in $NODES; do
-	echo "INFO: node $all rsyslog restart"
-	VMNAME=$all ${CLOUDBIN} ssh "service rsyslog restart" &
-done
-wait
+${CLOUDBIN} all 'RC-' "service rsyslog restart"
 sleep 10
 
 ${CLOUDBIN} sshs 'netstat -nlpa | grep rsyslog | grep ESTA | grep ":51[456] "'
@@ -162,10 +157,11 @@ echo "INFO: begin test result"
 ## test results
 for all in $NODES; do
 	NODEIP=$(VMNAME=$all ${CLOUDBIN} ssh 'facter ipaddress' | head -n1)
+	FORWARD_TYPE=$(VMNAME=$all metacloud.init ssh 'cat /etc/rsyslog.d/meta-remote.conf | grep "type=" | sed "s/.*=\"\(.*\)\"/\1/"' | head -n1)
 	${CLOUDBIN} sshs "/puppet/rsyslog/test03/result_client.py -n ${NODEIP} -t ${TESTID} -c ${COUNT} 1>>/tmp/test_results.${TESTID}.log 2>&1"
 done
 ${CLOUDBIN} sshs "cat /tmp/test_results.${TESTID}.log"
-${CLOUDBIN} sshs "/puppet/rsyslog/test03/result_test.py -t ${TESTID} -c ${COUNT} -n ${NODESCOUNT} -D ${DISRUPT} -l /tmp/test_results.${TESTID}.log --debug"
+${CLOUDBIN} sshs "/puppet/rsyslog/test03/result_test.py -t ${TESTID} -c ${COUNT} -n ${NODESCOUNT} -D ${DISRUPT} -f ${FORWARD_TYPE} -l /tmp/test_results.${TESTID}.log --debug"
 RET=$?
 
 echo "INFO: end test result"
