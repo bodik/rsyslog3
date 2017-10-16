@@ -249,8 +249,9 @@ case "$1" in
 	;;
 	all)
 		for all in $(/puppet/jenkins/bin/metacloud.init list | grep "$2" | awk '{print $4}'); do
-			VMNAME=$all /puppet/jenkins/bin/metacloud.init ssh "$3"
+			VMNAME=$all /puppet/jenkins/bin/metacloud.init ssh "$3" &
 		done
+		wait
 	;;
 
 
