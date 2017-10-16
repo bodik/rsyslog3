@@ -32,7 +32,7 @@ CLOUDBIN="/puppet/jenkins/bin/${CLOUD}.init"
 echo "INFO: begin test setup"
 
 NODES=$(${CLOUDBIN} list | grep "RC-" | awk '{print $4}')
-NODESCOUNT=$(echo -n $NODES | wc -l)
+NODESCOUNT=$(echo $NODES | wc -w)
 
 ${CLOUDBIN} all 'RC-' "cd /puppet && sh bootstrap.install.sh 1>/dev/null 2>/dev/null"
 ${CLOUDBIN} all 'RC-' "pa.sh -e 'class { \"rsyslog::client\": forward_type=>\"$FORWARD_TYPE\"}'"
