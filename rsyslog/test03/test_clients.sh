@@ -31,9 +31,8 @@ CLOUDBIN="/puppet/jenkins/bin/${CLOUD}.init"
 
 echo "INFO: begin test setup"
 
-NODES=$(${CLOUDBIN} list | grep "RC-" | awk '{print $4}' | grep -v "^$")
-NODESCOUNT=0
-for all in $NODES; do NODESCOUNT=$(($NODESCOUNT+1)); done
+NODES=$(${CLOUDBIN} list | grep "RC-" | awk '{print $4}')
+NODESCOUNT=$(echo -n $NODES | wc -l)
 
 ${CLOUDBIN} all 'RC-' "cd /puppet && sh bootstrap.install.sh 1>/dev/null 2>/dev/null"
 ${CLOUDBIN} all 'RC-' "pa.sh -e 'class { \"rsyslog::client\": forward_type=>\"$FORWARD_TYPE\"}'"
@@ -45,10 +44,7 @@ done
 
 echo "INFO: nodescount $NODESCOUNT"
 
-
-
 echo "INFO: reconnecting all nodes"
-
 ${CLOUDBIN} sshs 'service rsyslog stop'
 ${CLOUDBIN} sshs 'service rsyslog start'
 ${CLOUDBIN} all 'RC-' "service rsyslog restart"
@@ -57,9 +53,7 @@ sleep 10
 ${CLOUDBIN} sshs 'netstat -nlpa | grep rsyslog | grep ESTA | grep ":51[456] "'
 CONNS=$(${CLOUDBIN} sshs 'netstat -nlpa | grep rsyslog | grep ESTA | grep ":51[456] " | wc -l' | head -n1)
 echo "INFO: connected nodes ${CONNS}"
-if [ $CONNS -ne $NODESCOUNT ]; then
-	rreturn 1 "$0 missing nodes on startup"
-fi
+if [ $CONNS -ne $NODESCOUNT ]; then rreturn 1 "$0 missing nodes on startup"; fi
 
 echo "INFO: end test setup"
 
@@ -109,7 +103,6 @@ case $DISRUPT in
 
 esac
 
-###
 ###	ipdrop)
 ###(
 ###sleep 10;
@@ -124,19 +117,7 @@ esac
 ###;;
 ###
 ###
-###	manual)
-###(
-###sleep 10;
-###TIMER=120
-###echo "INFO: manual begin $TIMER";
-###count $TIMER
-###echo "INFO: manual end $TIMER";
-###)
-###WAITRECOVERY=230
-###;;
-###
-###
-###esac
+
 
 echo "INFO: waiting for nodes to finish"
 wait
