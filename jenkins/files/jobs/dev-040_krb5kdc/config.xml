@@ -10,22 +10,21 @@
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
   <triggers/>
-  <concurrentBuild>true</concurrentBuild>
+  <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>export VMNAME=&quot;RC-$$&quot;
+      <command>export VMNAME=&quot;RS-test&quot;
 /puppet/jenkins/bin/metacloud.init build
 /puppet/jenkins/bin/metacloud.init start
 /puppet/jenkins/bin/metacloud.init ssh &apos;wget https://rsyslog.metacentrum.cz/rsyslog3.git/bootstrap.install.sh &amp;&amp; sh -x bootstrap.install.sh&apos;
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh phase2.install.sh&apos;
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh metalib/tests/phase2.sh&apos;
 
+/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh krb5-kdc.install.sh&apos;
+/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh krb5/tests/kdc.sh&apos;
+
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh krb5-user.install.sh&apos;
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh krb5/tests/user.sh&apos;
-
-/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh -x rsyslog-client.install.sh&apos;
-/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh -x rsyslog/tests/rsyslog_installed.sh&apos;
-/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh -x rsyslog/tests/rsyslog-client_netstat.sh&apos;
 </command>
     </hudson.tasks.Shell>
   </builders>

@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<matrix-project plugin="matrix-project@1.12">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <axes>
+    <hudson.matrix.TextAxis>
+      <name>FORWARD_TYPE</name>
+      <values>
+        <string>omfwd</string>
+        <string>omrelp</string>
+        <string>omgssapi</string>
+      </values>
+    </hudson.matrix.TextAxis>
+    <hudson.matrix.TextAxis>
+      <name>COUNT</name>
+      <values>
+        <string>1000</string>
+        <string>5000</string>
+        <string>10000</string>
+        <string>50000</string>
+      </values>
+    </hudson.matrix.TextAxis>
+    <hudson.matrix.TextAxis>
+      <name>DISRUPT</name>
+      <values>
+        <string>none</string>
+        <string>restart</string>
+        <string>killserver</string>
+        <string>tcpkill</string>
+      </values>
+    </hudson.matrix.TextAxis>
+  </axes>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>cd /puppet
+sh rsyslog/test03/test_clients.sh -d &quot;${DISRUPT}&quot; -c &quot;${COUNT}&quot; -f &quot;${FORWARD_TYPE}&quot;</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+  <executionStrategy class="hudson.matrix.DefaultMatrixExecutionStrategyImpl">
+    <runSequentially>true</runSequentially>
+  </executionStrategy>
+</matrix-project>

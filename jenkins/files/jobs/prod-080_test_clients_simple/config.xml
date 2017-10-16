@@ -13,10 +13,8 @@
   <concurrentBuild>true</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>export VMNAME=&quot;RDEVCLIENTX&quot;
-/puppet/jenkins/bin/metacloud.init build
-/puppet/jenkins/bin/metacloud.init start
-/puppet/jenkins/bin/metacloud.init ssh &apos;wget https://rsyslog.metacentrum.cz/rsyslog3.git/bootstrap.install.sh &amp;&amp; sh -x bootstrap.install.sh&apos;</command>
+      <command>cd /puppet &amp;&amp; rsyslog/test03/test_clients.sh
+</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers/>
