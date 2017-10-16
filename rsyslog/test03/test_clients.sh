@@ -35,7 +35,9 @@ NODES=$(${CLOUDBIN} list | grep "RC-" | awk '{print $4}')
 NODESCOUNT=$(echo $NODES | wc -w)
 
 ${CLOUDBIN} all 'RC-' "cd /puppet && sh bootstrap.install.sh 1>/dev/null 2>/dev/null"
-${CLOUDBIN} all 'RC-' "pa.sh -e 'class { \"rsyslog::client\": forward_type=>\"$FORWARD_TYPE\"}'"
+${CLOUDBIN} all 'RC-' "pa.sh -e 'class { \"rsyslog::client\": forward_type=>\"$FORWARD_TYPE\"}' 1>/dev/null 2>/dev/null"
+${CLOUDBIN} all 'RC-' "cd /puppet && rsyslog/test03/logs_clean.sh 1>/dev/null 2>/dev/null"
+${CLOUDBIN} sshs "cd /puppet && rsyslog/test03/logs_clean.sh 1>/dev/null 2>/dev/null"
 
 for all in $NODES; do
 	echo "INFO: node $all config"
@@ -73,57 +75,50 @@ done
 # disrupts
 WAITRECOVERY=60
 
+sleep 10
 case $DISRUPT in
 
 	restart)
-		sleep 10
 		echo "INFO: restart begin"
 		${CLOUDBIN} sshs 'service rsyslog restart'
 		echo "INFO: restart end"
-		WAITRECOVERY=230
+		WAITRECOVERY=120
 	;;
 
 
 	killserver)
-		sleep 10
 		echo "INFO: killserver begin"
 		${CLOUDBIN} sshs 'kill -9 `pidof rsyslogd`'
 		${CLOUDBIN} sshs 'service rsyslog restart'
 		echo "INFO: killserver end"
-		WAITRECOVERY=230
+		WAITRECOVERY=120
 	;;
 
 	tcpkill)
-		sleep 10
 		echo "INFO: tcpkill begin";
 		${CLOUDBIN} sshs "/usr/bin/timeout 180 /puppet/rsyslog/test03/tcpkill -i eth0 port 515 or port 514 or port 516 2>/dev/null || /bin/true"
 		echo "INFO: tcpkill end"
-		WAITRECOVERY=230
+		WAITRECOVERY=120
+	;;
+
+	ipdrop)
+		echo "INFO: ipdrop begin"
+		${CLOUDBIN} sshs 'iptables -I INPUT -m multiport -p tcp --dport 514,515,516 -j DROP'
+		sleep 180
+		${CLOUDBIN} sshs 'iptables -D INPUT -m multiport -p tcp --dport 514,515,516 -j DROP'
+		echo "INFO: ipdrop end"
+		WAITRECOVERY=120
 	;;
 
 esac
 
-###	ipdrop)
-###(
-###sleep 10;
-###TIMER=240
-###echo "INFO: ipdrop begin $TIMER";
-###/puppet/jenkins/bin/$CLOUD.init sshs 'iptables -I INPUT -m multiport -p tcp --dport 514,515,516 -j DROP'
-###sleep $TIMER;
-###/puppet/jenkins/bin/$CLOUD.init sshs 'iptables -D INPUT -m multiport -p tcp --dport 514,515,516 -j DROP'
-###echo "INFO: ipdrop end $TIMER";
-###)
-###WAITRECOVERY=230
-###;;
-###
-###
 
 
 echo "INFO: waiting for nodes to finish"
 wait
 echo "INFO: nodes finished"
 
-echo "INFO: waiting to sync for $WAITRECOVERY secs"
+echo "INFO: waiting to sync $WAITRECOVERY secs"
 countdown $WAITRECOVERY
 
 echo "INFO: end test body"
