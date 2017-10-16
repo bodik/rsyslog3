@@ -56,6 +56,7 @@ if __name__ == "__main__":
 		"disrupt": args.disrupt,
 		"forward_type": args.forwardtype,
 		"nodes": nodes,
+		"nodes_count": len(nodes),
 		"total_count": total_count,
 		"delivered": delivered,
 		"delivered_rate": delivered_rate,
