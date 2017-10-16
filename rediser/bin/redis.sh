@@ -1,3 +1,4 @@
 #!/bin/sh
 
-redis-cli -p 16379 $@
+redis-cli --raw -p 16379 $@
+exit $?
