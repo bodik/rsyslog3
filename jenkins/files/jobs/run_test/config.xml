@@ -13,9 +13,7 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>sh -x /puppet/jenkins/bin/run_jobs.sh &quot;^dev-&quot;
-sh -x /puppet/jenkins/bin/run_jobs.sh &quot;^prod-&quot;
-sh -x /puppet/jenkins/bin/run_jobs.sh &quot;^test-&quot;</command>
+      <command>sh -x /puppet/jenkins/bin/run_jobs.sh &quot;^test-&quot;</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers/>

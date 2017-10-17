@@ -23,10 +23,9 @@
     <hudson.matrix.TextAxis>
       <name>COUNT</name>
       <values>
-        <string>1000</string>
         <string>5000</string>
         <string>10000</string>
-        <string>50000</string>
+        <string>30000</string>
       </values>
     </hudson.matrix.TextAxis>
     <hudson.matrix.TextAxis>
@@ -36,6 +35,7 @@
         <string>restart</string>
         <string>killserver</string>
         <string>tcpkill</string>
+        <string>ipdrop</string>
       </values>
     </hudson.matrix.TextAxis>
   </axes>
