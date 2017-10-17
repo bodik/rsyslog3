@@ -14,16 +14,7 @@ filter {
 				}
 				mutate {
 					rename => ["[geoip][country_code2]", "[geoip][cc]"]
-					add_field => { "[f2b][hostname]" => "%{[f2b][remote]}" }
 	                	}
-				dns {
-					reverse => [ "[f2b][hostname]" ]
-					action => "replace"
-					hit_cache_size => 5000
-					hit_cache_ttl => 3600
-					failed_cache_size => 5000
-					failed_cache_ttl => 3600
-				}
 			}
 		}
 	}

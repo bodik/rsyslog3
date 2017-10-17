@@ -13,15 +13,6 @@ filter {
 				}
 		                mutate {
 					rename => ["[geoip][country_code2]", "[geoip][cc]"]
-					add_field => { "[auth][hostname]" => "%{[auth][remote]}" }
-				}
-				dns {
-					reverse => [ "[auth][hostname]" ]
-					action => "replace"
-					hit_cache_size => 5000
-					hit_cache_ttl => 3600
-					failed_cache_size => 5000
-					failed_cache_ttl => 3600
 				}
 			}
 		}
