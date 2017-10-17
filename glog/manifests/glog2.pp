@@ -231,9 +231,8 @@ class glog::glog2(
 	# apache proxy
 	ensure_resource( 'lamp::apache2::a2enmod', "proxy", {} )
 	ensure_resource( 'lamp::apache2::a2enmod', "proxy_http", {} )
-	ensure_resource( 'lamp::apache2::a2enconf', "glog2", { "require" => File["/etc/apache2/conf-available/glog2.conf"] } )
-	file { "/etc/apache2/conf-available/glog2.conf":
-		source => "puppet:///modules/${module_name}/etc/apache2/conf-available/glog2.conf",
+	file { "/etc/apache2/sites-enabled/00server.conf.50glog2":
+		source => "puppet:///modules/${module_name}/etc/apache2/sites-enabled/00server.conf.50glog2",
         	owner => "root", group => "root", mode => "0644",
 	        require => [Package["apache2"], Service["elasticsearch"], Service["kibana"]],
 		notify => Service["apache2"],
