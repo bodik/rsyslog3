@@ -162,7 +162,7 @@ class glog::glog2(
 		notify => Service["logstash"],
 	}
 
-	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/10-input-udp.conf": }
+	glog::glog2::logstash_config_file { "/etc/logstash/conf.d/10-input-json.conf": }
 
 	if ($redis_server) {
 		$redis_server_real = $redis_server

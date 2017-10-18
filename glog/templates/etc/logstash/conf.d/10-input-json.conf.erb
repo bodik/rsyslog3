@@ -1,0 +1,13 @@
+input {
+        udp {
+                port => 47700
+		type => "json"
+		codec => "json_lines"
+        }
+        tcp {
+                port => 47701
+		type => "json"
+		codec => "json_lines"
+        }
+
+}

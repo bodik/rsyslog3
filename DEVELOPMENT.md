@@ -108,3 +108,23 @@ documentation.
 * [lamp](https://github.com/bodik/rsyslog3/tree/master/lamp/)
 * [glog](https://github.com/bodik/rsyslog3/tree/master/glog/)
 
+## Port registry
+
+* 514/tcp - rsyslog imfwd
+* 515/tcp - rsyslog imrelp
+* 516/tcp - rsyslog imgssapi
+
+* 16379/tcp - redis
+
+* localhost 39100/tcp - grunt npm elasticsearch-head
+* localhost 39200-39300/tcp - elasticsearch http
+
+* 47700/udp - logstash json_lines
+* 47701/tcp - logstash json_lines
+
+* 47800/tcp - rediser test
+* 47801/tcp - rediser syslog
+* 47802/tcp - rediser json
+
+* 47900/http - kdc_http
+
