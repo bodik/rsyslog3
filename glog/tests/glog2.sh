@@ -45,9 +45,9 @@ if [ $LOGSTASH_AGE -lt 60 ] ; then
 	sleep 120
 fi
 
-netstat -nlpa | grep " $(pgrep -f logstash/runner.rb)/java" | egrep "udp.*:::39994"
+netstat -nlpa | grep " $(pgrep -f logstash/runner.rb)/java" | egrep "udp.*:::47700"
 if [ $? -ne 0 ]; then
-	rreturn 1 "$0 logstash/runner.rb not listening for gcm logs"
+	rreturn 1 "$0 logstash/runner.rb not listening for json data"
 fi
 
 
@@ -118,7 +118,7 @@ done
 
 
 RANDOM=$(/bin/dd if=/dev/urandom bs=100 count=1 2>/dev/null | /usr/bin/sha256sum | /usr/bin/awk '{print $1}')
-echo "{\"message\": \"autotest\", \"x\":\"${RANDOM}\"}" | nc -q0 -u 127.0.0.1 39994
+echo "{\"message\": \"autotest\", \"x\":\"${RANDOM}\"}" | nc -q0 -u 127.0.0.1 47700
 
 I=60
 while(true); do
