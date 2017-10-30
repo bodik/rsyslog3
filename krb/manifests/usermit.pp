@@ -1,4 +1,4 @@
-class krb::user_mit(
+class krb::usermit(
 	$kdc_server = undef,
 ) {
 	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
@@ -19,8 +19,8 @@ class krb::user_mit(
 	package { "krb5-user": ensure => installed, }
 
 
-	exec { "getkeytab":
-		command => "/bin/sh /puppet/krb/bin/getkeytab.sh",
+	exec { "curl_getkeytab.sh":
+		command => "/bin/sh /puppet/krb/bin/curl_getkeytab.sh",
 		creates => "/etc/krb5.keytab",
 	}
 }
