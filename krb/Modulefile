@@ -1,4 +1,4 @@
-name    'rsyslog3-krb5'
+name    'rsyslog3-krb'
 version '0.0.1'
 source 'UNKNOWN'
 author 'rsyslog3'

@@ -1,4 +1,4 @@
-class krb5::user(
+class krb::user_mit(
 	$kdc_server = undef,
 ) {
 	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
@@ -20,7 +20,7 @@ class krb5::user(
 
 
 	exec { "getkeytab":
-		command => "/bin/sh /puppet/krb5/bin/getkeytab.sh",
+		command => "/bin/sh /puppet/krb/bin/getkeytab.sh",
 		creates => "/etc/krb5.keytab",
 	}
 }

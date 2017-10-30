@@ -1,4 +1,4 @@
-class krb5::kdc(
+class krb::kdc_mit(
 	$avahi_broadcast = true,
 ) {
 	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
