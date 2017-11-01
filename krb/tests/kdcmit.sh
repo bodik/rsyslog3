@@ -12,10 +12,9 @@ if [ $? -ne 0 ]; then
 	rreturn 1 "$0 kadmin check_procs"
 fi
 
-SERVICE=_krb5kdc._udp
-avahi-browse -t $SERVICE --resolve -p | grep $(facter ipaddress)
+avahi-browse -t _kdc._udp --resolve -p | grep $(facter ipaddress)
 if [ $? -ne 0 ]; then
-	rreturn 1 "$0 _krb5kdc._udp not found"
+	rreturn 1 "$0 _kdc._udp not found"
 fi
 
 
