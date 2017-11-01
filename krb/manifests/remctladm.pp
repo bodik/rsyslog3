@@ -45,14 +45,18 @@ class krb::remctladm() {
 		require => Package["remctl-server"],
 		notify => Service["remctld"],
 	}
-	file_line { "main manager principal":
-		path => "/etc/krb5kdc/kadm5.acl",
-		line => "host/${fqdn} acdeilmps",
-		notify => Service["krb5-admin-server"],
-	}
-	service { "krb5-admin-server": }
 	file { "/usr/local/bin/remctladm":
 		ensure => link, target => "/puppet/krb/files/remctladm/remctladm.py",
+	}
+
+
+	if( file_exists("/etc/krb5kdc/kadm5.acl") == 1 ) {
+		file_line { "main manager principal":
+			path => "/etc/krb5kdc/kadm5.acl",
+			line => "host/${fqdn} acdeilmps",
+			notify => Service["krb5-admin-server"],
+		}
+		service { "krb5-admin-server": }
 	}
 
 }

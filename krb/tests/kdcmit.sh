@@ -19,16 +19,6 @@ if [ $? -ne 0 ]; then
 fi
 
 
-
-/usr/lib/nagios/plugins/check_procs --argument-array="/usr/bin/python /opt/kdc_http/kdc_http.py" -c 1:1
-if [ $? -ne 0 ]; then
-	rreturn 1 "$0 kdc_http check_procs"
-fi
-netstat -nlpa | grep "/python " | grep LISTEN | grep :47900
-if [ $? -ne 0 ]; then
-	rreturn 1 "$0 rediser listener"
-fi
-
-
+sh /puppet/krb/tests/kadminhttp.sh
 
 rreturn 0 "$0"

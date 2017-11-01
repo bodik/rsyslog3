@@ -56,7 +56,16 @@ class kdc_handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 
 	def get_keytab(self):
-		tmpfile = "/tmp/tmp-kdc_httpd-keytab"
+		if os.path.exists("/usr/sbin/kadmin.local"):
+			return self._get_keytab_mit()
+
+		if os.path.exists("/usr/bin/kadmin.heimdal"):
+			return self._get_keytab_heimdal()
+
+		return (500, "")
+
+	def _get_keytab_mit(self):
+		tmpfile = "/tmp/tmp-kadminhttp-keytab"
 		hostname = self._resolve_client_address(self.client_address[0])
 
 		try:
@@ -73,6 +82,33 @@ class kdc_handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 			os.unlink(tmpfile)
                 output = subprocess.check_call(shlex.split( "/usr/sbin/kadmin.local 'ktadd' '-keytab' '%s' 'host/%s@%s'" % (tmpfile, hostname, args.realm) ))
 		logger.debug("ktadd: %s" % output)
+
+		if os.path.exists(tmpfile):
+			with open(tmpfile, "r") as f:
+				data = f.read()
+			os.unlink(tmpfile)
+				
+		return (200, data)
+
+
+	def _get_keytab_heimdal(self):
+		tmpfile = "/tmp/tmp-kadminhttp-keytab"
+		hostname = self._resolve_client_address(self.client_address[0])
+
+		try:
+	                output = subprocess.check_output(shlex.split( "/usr/bin/kadmin.heimdal -l 'delete' 'host/%s@%s'" % (hostname, args.realm) ))
+			logger.debug("delprinc: %s" % output)
+		except Exception as e:
+			logger.debug(e.output)
+
+                output = subprocess.check_call(shlex.split( "/usr/bin/kadmin.heimdal -l 'ank' '--use-defaults' '--random-key' 'host/%s@%s'" % (hostname, args.realm) ))
+		logger.debug("ank: %s" % output)
+
+
+		if os.path.exists(tmpfile):
+			os.unlink(tmpfile)
+                output = subprocess.check_call(shlex.split( "/usr/bin/kadmin.heimdal -l 'ext_keytab' '-k' '%s' 'host/%s@%s'" % (tmpfile, hostname, args.realm) ))
+		logger.debug("ext_keytab: %s" % output)
 
 		if os.path.exists(tmpfile):
 			with open(tmpfile, "r") as f:
