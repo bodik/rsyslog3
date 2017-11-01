@@ -8,17 +8,14 @@ class krb::remctladm() {
 		ensure => installed
 	}
 
-	# as standalone service
-	package { "openbsd-inetd":
-		ensure => absent,
-		require => Package["remctl-server"],
-		before => Service["remctld"],
-	}
+	service { "inetd": }
 	file_line { "remove inetd remctl conf":
 		ensure => absent,
 		path => "/etc/inetd.conf", line => "/usr/sbin/remctld", match => "/usr/sbin/remctld",
 		match_for_absence => true,
+		notify => Service["inetd"],
 	}
+
 	file { "/etc/systemd/system/remctld.service": 
 		source => "puppet:///modules/${module_name}/etc/systemd/system/remctld.service",
 		owner => "root", group => "root", mode => "0644",
