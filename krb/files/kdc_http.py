@@ -77,6 +77,7 @@ class kdc_handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		if os.path.exists(tmpfile):
 			with open(tmpfile, "r") as f:
 				data = f.read()
+			os.unlink(tmpfile)
 				
 		return (200, data)
 
