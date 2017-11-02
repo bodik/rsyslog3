@@ -38,7 +38,5 @@ class krb::kdcmit(
 	}
 
 	include krb::kadminhttp
-
 	class { "krb::avahikdc": enabled => $avahi_broadcast, }
-
 }
