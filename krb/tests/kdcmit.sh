@@ -12,12 +12,6 @@ if [ $? -ne 0 ]; then
 	rreturn 1 "$0 kadmin check_procs"
 fi
 
-avahi-browse -t _kdc._udp --resolve -p | grep $(facter ipaddress)
-if [ $? -ne 0 ]; then
-	rreturn 1 "$0 _kdc._udp not found"
-fi
-
-
 sh /puppet/krb/tests/kadminhttp.sh
 
 rreturn 0 "$0"
