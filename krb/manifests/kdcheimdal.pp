@@ -16,7 +16,7 @@ class krb::kdcheimdal(
 	package { "heimdal-clients": ensure => installed }
 	package { "heimdal-kdc":
 		ensure => installed,
-		require => Package["heimdal-kdc"]
+		require => Package["heimdal-clients"]
 	}
 
 	exec { "init realm":
