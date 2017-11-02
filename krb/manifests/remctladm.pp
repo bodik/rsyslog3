@@ -11,13 +11,11 @@ class krb::remctladm() {
 		content => "remctladmd ALL /puppet/krb/files/remctladm/remctladmd.py /etc/remctl/acl/remctladmd\n",
 		owner => "root", group => "root", mode => "0640",
 		require => Package["remctl-server"],
-		notify => Service["remctld"],
 	}
 	file { "/etc/remctl/acl/remctladmd":
 		content => "anyuser:auth\n",
 		owner => "root", group => "root", mode => "0640",
 		require => Package["remctl-server"],
-		notify => Service["remctld"],
 	}
 	file { "/usr/local/bin/remctladm":
 		ensure => link, target => "/puppet/krb/files/remctladm/remctladm.py",
