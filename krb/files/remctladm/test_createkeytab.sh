@@ -4,7 +4,12 @@
 
 KEYTAB="/tmp/test_remctladm_createkeytab_$$"
 for service in ftp pbs nfs; do
-	kadmin.local delprinc $service/$(facter fqdn) 1>/dev/null 2>/dev/null
+	if [ -f /etc/krb5/kadm5.acl ]; then
+		kadmin.local delprinc $service/$(facter fqdn) 1>/dev/null 2>/dev/null
+	fi
+	if [ -f /etc/heimdal-kdc/kadmind.acl ]; then
+		kadmin.heimdal -l delete $service/$(facter fqdn) 1>/dev/null 2>/dev/null
+	fi
 done
 
 # create

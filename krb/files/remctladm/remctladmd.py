@@ -20,45 +20,72 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s '+os.path.basena
 
 
 
+
+
+### validation helpers
+###
+
+def is_valid_host(host):
+	if not re.match("[a-zA-Z0-9@\.\-]+", host):
+		raise ValueError("invalid host")
+	return True
+
+def is_valid_service(service):
+	if not re.match("[a-zA-Z]+", service):
+		raise ValueError("invalid service")
+	return True
+
+def is_valid_filename(filename):
+	if not re.match("[a-zA-Z0-9/_\.\-]+", filename):
+		raise ValueError("invalid filename")
+	return True
+
+def is_valid_data(data):
+	try:
+		base64.b64decode(data)
+	except:
+		raise ValueError("invalid data")
+	return True
+
+
+
+
+
+
 ### kadmin automation classes
 ###
 
 class Kadmin:
 	""" root class for kadmin automation """
-
 	def __init__(self, realm):
 		self.realm = realm
-
 		if self.realm in config["realm"]:
 			self.admin = config["realm"][self.realm]
 		else:
 			raise Exception("no credentials for realm %s" % self.realm)
 
-
 		
 	@staticmethod
 	def factory(principal):
 		""" returns proper class based on realm from principal"""
-		if (principal.find("@") != -1):
-			realm = principal.split("@")[-1]
-		else:
-			realm = Kadmin.guess_realm(principal)
-
+		realm = Kadmin.guess_realm(principal)
 		try:
 			# instantiate class by name referenced in config as a string
 			return globals()[config["realm"][realm]["type"]](realm)
 		except:
 			raise Exception("realm %s not properly configured" % realm)
 
-	
 
 	@staticmethod
 	def guess_realm(host, path = "/etc/krb5.conf"):
 		""" guess host realm by longest match of host vs domain name-realm mapping """
-	
+
+		if (host.find("@") != -1):
+			return host.split("@")[-1]
+
+		# cannot be parsed by ConfigParser due to realm syntax	
 		guessed_realm = {"domain": "", "realm": None}
 		section = None
-	
 		with open(path) as f: data = [x.strip() for x in f.read().splitlines()]
 		for line in data:
 			m = re.search("\[(?P<section>.*)\]",line)
@@ -78,8 +105,6 @@ class Kadmin:
 
 
 
-
-
 class KadminMit(Kadmin):
 	def exec_kadmin(self, command):
 		cmd = "/usr/bin/kadmin -r {realm} -p {admin_principal} -k -t {admin_keytab} {command}".format(
@@ -88,11 +113,9 @@ class KadminMit(Kadmin):
 		return subprocess.check_output(shlex.split(cmd))
 
 
-
 	def list_principals(self, principal):
 		principals = self.exec_kadmin("list_principals %s" % principal).splitlines()
 		return principals
-
 
 
 	def add_principal(self, principal):
@@ -105,8 +128,6 @@ class KadminMit(Kadmin):
 		ret = self.exec_kadmin("add_principal -randkey -policy default_nohistory +requires_preauth {opts} {principal}@{realm}".format(
 			principal=principal, realm=self.realm, opts=" ".join(opts)))
 		return ret
-
-
 
 
 	def ktadd(self, principal, path_keytab):
@@ -125,15 +146,12 @@ class KadminHeimdal(Kadmin):
 		return subprocess.check_output(shlex.split(cmd))
 
 
-
 	def list_principals(self, principal):
 		try:
 			principals = self.exec_kadmin("list -l %s" % principal).splitlines()
 		except:
 			principals = []
-
 		return principals
-
 
 
 	def add_principal(self, principal):
@@ -141,10 +159,20 @@ class KadminHeimdal(Kadmin):
 
 		ret = self.exec_kadmin("add --random-key --use-defaults {principal}@{realm}".format(principal=principal, realm=self.realm))
 		
-#		if service == "nfs":
-#			ret = self.exec_kadmin("get -s -o keytypes {principal}@{realm}".format(principal=principal, realm=self.realm)
-		return ret
+		if service == "nfs":
+			ensure_enctypes = ["des-cbc-crc", "des-cbc-md5"]
+			for enctype in ensure_enctypes:
+				ret = self.exec_kadmin("add_enctype --random-key {principal}@{realm} {enctype}".format(principal=principal, realm=self.realm, enctype=enctype))
 
+			keytypes = self.exec_kadmin("get -s -o keytypes {principal}@{realm}".format(principal=principal, realm=self.realm))
+			enctypes = [x.split("(")[0].strip() for x in keytypes.splitlines()[-1].split(",")]
+			logger.debug(enctypes)
+
+			for enctype in enctypes:
+				if enctype not in ensure_enctypes:
+					ret = self.exec_kadmin("del_enctype {principal}@{realm} {enctype}".format(principal=principal, realm=self.realm, enctype=enctype))
+			
+		return True
 
 
 	def ktadd(self, principal, path_keytab):
@@ -152,8 +180,13 @@ class KadminHeimdal(Kadmin):
 
 
 
+
+
+
 ### authorization framework
 ###
+
+
 
 class NotAuthorizedException(Exception):
 	""" raised when user is not authorized to perform requested action """
@@ -169,11 +202,10 @@ def check_by_regexp(regexp, val):
 	return True
 
 def is_authorized(**kwargs):
+	""" check all arguments against coresponding regexps from config for caller function name """
 	caller = inspect.currentframe().f_back.f_code.co_name
-
-	# caller command has not configured any constraints >> default deny
 	if caller not in config["acls"]: raise NotAuthorizedException("is_authorized denied %s to %s:%s" % (remoteuser, caller, kwargs))
-		
+
 	# evaluate every acl for given command
 	for acl in config["acls"][caller]:
 			if acl["group"] not in config["groups"]: continue
@@ -198,7 +230,10 @@ def is_authorized(**kwargs):
 ###
 
 def createkeytab(host, services):
+	is_valid_host(host)
+	[is_valid_service(x) for x in services]
 	is_authorized(host=host, services=services)
+
 
 	kadmin = Kadmin.factory(host)
 	host = host.split("@")[0] # strip realm if present
@@ -228,7 +263,11 @@ def createkeytab(host, services):
 
 
 def storesshhostkey(host, filename, data):
+	is_valid_host(host)
+	is_valid_filename(filename)
+	is_valid_data(data)
 	is_authorized(host=host, filename=filename)
+
 
 	destdir = os.path.realpath("%s/%s" % (config["ssh-key-storage"], host))
 	if not destdir.startswith(config["ssh-key-storage"]):
@@ -250,6 +289,8 @@ def storesshhostkey(host, filename, data):
 
 
 def getsshhostkey(host, filename):
+	is_valid_host(host)
+	is_valid_filename(filename)
 	is_authorized(host=host, filename=filename)
 
 	destdir = os.path.realpath("%s/%s" % (config["ssh-key-storage"], host))
@@ -303,7 +344,6 @@ if __name__ == "__main__":
 	remoteuser = os.getenv("REMOTE_USER", "UNAUTHENTICATED")
 	logger.debug("authenticated as %s" % remoteuser)
 	args = parse_arguments()
-	logger.debug("startup arguments: %s" % args)
 	with open( "%s/remctladmd.conf" % os.path.dirname(os.path.abspath(__file__)), "r") as f:
 		config = json.loads(f.read())
 

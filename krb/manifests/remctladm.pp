@@ -59,7 +59,7 @@ class krb::remctladm() {
 	if( file_exists("/etc/heimdal-kdc/kadmind.acl") == 1 ) {
 		file_line { "main manager principal":
 			path => "/etc/heimdal-kdc/kadmind.acl",
-			line => "host/${fqdn} all",
+			line => "host/${fqdn} cpw,list,delete,modify,add,get,get-keys",
 		}
 	}
 
