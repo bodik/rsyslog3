@@ -81,7 +81,6 @@ class Kadmin:
 
 
 class KadminMit(Kadmin):
-
 	def exec_kadmin(self, command):
 		cmd = "/usr/bin/kadmin -r {realm} -p {admin_principal} -k -t {admin_keytab} {command}".format(
 			realm = self.realm, admin_principal = self.admin["principal"], admin_keytab = self.admin["keytab"], command = command)
@@ -119,9 +118,37 @@ class KadminMit(Kadmin):
 
 
 class KadminHeimdal(Kadmin):
-	pass
+	def exec_kadmin(self, command):
+		cmd = "/usr/bin/kadmin.heimdal --realm={realm} --principal={admin_principal} --keytab={admin_keytab} {command}".format(
+			realm = self.realm, admin_principal = self.admin["principal"], admin_keytab = self.admin["keytab"], command = command)
+		logger.debug(cmd)
+		return subprocess.check_output(shlex.split(cmd))
 
 
+
+	def list_principals(self, principal):
+		try:
+			principals = self.exec_kadmin("list -l %s" % principal).splitlines()
+		except:
+			principals = []
+
+		return principals
+
+
+
+	def add_principal(self, principal):
+		(service, host) = principal.split("/")
+
+		ret = self.exec_kadmin("add --random-key --use-defaults {principal}@{realm}".format(principal=principal, realm=self.realm))
+		
+#		if service == "nfs":
+#			ret = self.exec_kadmin("get -s -o keytypes {principal}@{realm}".format(principal=principal, realm=self.realm)
+		return ret
+
+
+
+	def ktadd(self, principal, path_keytab):
+		return self.exec_kadmin("ext_keytab --keytab={path} {principal}@{realm}".format(path=path_keytab, principal=principal, realm=self.realm))
 
 
 

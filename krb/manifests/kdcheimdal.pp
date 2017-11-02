@@ -25,6 +25,11 @@ class krb::kdcheimdal(
 		require => Package["heimdal-kdc"],
 	}
 
+	file { "/var/lib/heimdal-kdc/kadmind.acl":
+		ensure => link, target => "/etc/heimdal.kdc/kadmind.acl",
+		require => Package["heimdal-kdc"],
+	}
+
 
 	include krb::kadminhttp
 	class { "krb::avahikdc": enabled => $avahi_broadcast, }

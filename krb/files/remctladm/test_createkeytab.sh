@@ -8,7 +8,7 @@ for service in ftp pbs nfs; do
 done
 
 # create
-kinit -k
+kinit -k -t /etc/krb5.keytab host/$(facter fqdn)
 remctladm createkeytab --host $(facter fqdn) --services host ftp pbs nfs --outfile ${KEYTAB}
 if [ $? -ne 0 ]; then
 	rreturn 1 "remctladm failed"
@@ -16,7 +16,7 @@ fi
 
 # test
 for service in host ftp pbs nfs; do
-	kinit -V -k -t ${KEYTAB} ${service}/$(facter fqdn) || rreturn 1 "$0 kinit $service failed"
+	kinit -k -t ${KEYTAB} ${service}/$(facter fqdn) || rreturn 1 "$0 kinit $service failed"
 done
 
 

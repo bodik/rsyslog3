@@ -6,6 +6,8 @@ TESTFILE="/tmp/test_remctladm_maxfilesize"
 MIN=0
 MAX=1000000
 
+kinit -k -t /etc/krb5.keytab host/$(facter fqdn)
+
 while true; do
 
 	TRY=$(( $MIN + (($MAX - $MIN) / 2) ))

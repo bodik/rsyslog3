@@ -56,4 +56,11 @@ class krb::remctladm() {
 		service { "krb5-admin-server": }
 	}
 
+	if( file_exists("/etc/heimdal-kdc/kadmind.acl") == 1 ) {
+		file_line { "main manager principal":
+			path => "/etc/heimdal-kdc/kadmind.acl",
+			line => "host/${fqdn} all",
+		}
+	}
+
 }
