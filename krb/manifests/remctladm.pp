@@ -8,12 +8,7 @@ class krb::remctladm() {
 		ensure => installed
 	}
 	file { "/etc/remctl/conf.d/remctladm":
-		content => "remctladmd ALL /puppet/krb/files/remctladm/remctladmd.py /etc/remctl/acl/remctladmd\n",
-		owner => "root", group => "root", mode => "0640",
-		require => Package["remctl-server"],
-	}
-	file { "/etc/remctl/acl/remctladmd":
-		content => "anyuser:auth\n",
+		content => "remctladmd ALL /puppet/krb/files/remctladm/remctladmd.py anyuser:auth\n",
 		owner => "root", group => "root", mode => "0640",
 		require => Package["remctl-server"],
 	}

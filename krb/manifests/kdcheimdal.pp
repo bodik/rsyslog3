@@ -21,7 +21,7 @@ class krb::kdcheimdal(
 
 	exec { "init realm":
 		command => "/bin/echo -e '\n\n' | /usr/bin/kadmin.heimdal -l init RSYSLOG3",
-		creates => "/var/lib/heimdal-kdc/heimdal.db",
+		unless => "/usr/bin/kadmin.heimdal -l list -l krbtgt/RSYSLOG3@RSYSLOG3",
 		require => Package["heimdal-kdc"],
 	}
 
