@@ -7,22 +7,25 @@ class krb::kdcheimdal(
 
 
 	$kdc_server_real = $fqdn
-	$packages = ["heimdal-kdc", "heimdal-clients"]
-	package { $packages: ensure => installed }
-	
-	exec { "init realm":
-		command => "/bin/echo -e '\n\n' | /usr/bin/kadmin.heimdal -l init RSYSLOG3",
-		creates => "/var/lib/heimdal-kdc/heimdal.db",
-		require => Package[$packages],
-	}
-
 	file { "/etc/krb5.conf":
 		content => template("${module_name}/etc/krb5.conf.erb"),
 		owner => "root", group => "root", mode => "0644",
-		before => Package[$packages],
+		before => Package["heimdal-clients"],
 	}
 
-	include krb::kadminhttp
+	package { "heimdal-clients": ensure => installed }
+	package { "heimdal-kdc":
+		ensure => installed,
+		require => Package["heimdal-kdc"]
+	}
 
+	exec { "init realm":
+		command => "/bin/echo -e '\n\n' | /usr/bin/kadmin.heimdal -l init RSYSLOG3",
+		creates => "/var/lib/heimdal-kdc/heimdal.db",
+		require => Package["heimdal-kdc"],
+	}
+
+
+	include krb::kadminhttp
 	class { "krb::avahikdc": enabled => $avahi_broadcast, }
 }
