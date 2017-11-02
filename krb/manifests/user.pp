@@ -36,7 +36,7 @@ class krb::user(
 
 
 	exec { "kadminhttp_getkeytab.sh":
-		command => "/bin/sh /puppet/krb/bin/kadminhttp_getkeytab.sh",
+		command => "/bin/sh /puppet/krb/bin/kadminhttp_getkeytab.sh ${kdc_server_real}",
 		creates => "/etc/krb5.keytab",
 	}
 }
