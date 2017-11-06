@@ -73,12 +73,12 @@ Following commands will ensure installation of basic components for data analysi
 (elasticsearch data node, logstash processor, kibana frontend).
 
 ```
-wget https://haas.cesnet.cz/haas.git/bootstrap.install.sh && sh bootstrap.install.sh
+wget https://rsyslog.metacentrum.cz/rsyslog3.git/bootstrap.install.sh && sh bootstrap.install.sh
 cd /puppet && ls -l
 sh phase2.install.sh
 sh glog2.install.sh
 sh glog/tests/glog2.sh
-links https://$(facter fqdn)/haas/test/dash.html
+links https://$(facter fqdn)/rsyslog3/test/dash.html
 ```
  
 ### Example installation of testing rsyslog server development node
