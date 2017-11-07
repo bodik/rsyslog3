@@ -13,19 +13,22 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>export VMNAME=&quot;RS-test&quot;
+      <command>export VMNAME=&quot;RS-remkdcmit&quot;
 /puppet/jenkins/bin/metacloud.init build
 /puppet/jenkins/bin/metacloud.init start
 /puppet/jenkins/bin/metacloud.init ssh &apos;wget https://rsyslog.metacentrum.cz/rsyslog3.git/bootstrap.install.sh &amp;&amp; sh -x bootstrap.install.sh&apos;
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh phase2.install.sh&apos;
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh metalib/tests/phase2.sh&apos;
 
-/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh krb-kdcmit.install.sh&apos;
+/puppet/jenkins/bin/metacloud.init ssh &apos;pa.sh -e &quot;class { \&quot;krb::kdcmit\&quot;: avahi_broadcast =&gt; false }&quot;&apos;
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh krb/tests/kdcmit.sh&apos;
 
-/puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh krb-user.install.sh&apos;
+/puppet/jenkins/bin/metacloud.init ssh &apos;pa.sh -e &quot;class { \&quot;krb::user\&quot;: kdc_server =&gt; \&quot;$(facter fqdn)\&quot; }&quot;&apos;
 /puppet/jenkins/bin/metacloud.init ssh &apos;cd /puppet &amp;&amp; sh krb/tests/user.sh&apos;
-</command>
+
+/puppet/jenkins/bin/metacloud.init ssh &apos;wget https://rsyslog.metacentrum.cz/remad.git/bootstrap.sh &amp;&amp; sh -x bootstrap.sh&apos;
+/puppet/jenkins/bin/metacloud.init ssh &apos;cd /opt/remad &amp;&amp; pa.sh install.pp&apos;
+/puppet/jenkins/bin/metacloud.init ssh &apos;cd /opt/remad &amp;&amp; sh test.sh&apos;</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers/>
