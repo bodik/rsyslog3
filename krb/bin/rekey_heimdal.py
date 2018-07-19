@@ -9,6 +9,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.parse
 
 
@@ -16,8 +17,6 @@ import urllib.parse
 ENCTYPES = ["des3-cbc-sha1", "aes256-cts-hmac-sha1-96"]
 REKEY_CONFIG = "/etc/heimdal-kdc/kadmin-rekey.conf"
 
-SUCCESS = 0
-ERROR = 1
 CHOICES = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$^&*()+/?,."
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(levelname)s %(message)s')
@@ -45,7 +44,11 @@ def fetch(keytab):
 
 
 	elif keytab_url.scheme == "ssh":
-		raise NotImplementedError
+		try:
+			subprocess.check_call(shlex.split("scp %s:%s %s" % (keytab_url.netloc, keytab_url.path, keytab_temp)))
+		except Exception:
+			os.unlink(keytab_temp)
+			raise RuntimeError("cannot fetch keytab") from None
 
 
 	else:
@@ -111,13 +114,18 @@ def put(keytab_temp, keytab):
 
 	if keytab_url.scheme == "file":
 		try:
-			subprocess.check_call(shlex.split("cp --archive --backup=numbered %s %s" % (keytab_temp, keytab_url.path)))
+			subprocess.check_call(shlex.split("cp --archive %s %s.rekeybackup.%s" % (keytab_url.path, keytab_url.path, time.time())))
+			subprocess.check_call(shlex.split("cp --archive %s %s" % (keytab_temp, keytab_url.path)))
 		except Exception:
 			raise RuntimeError("cannot put keytab") from None
 
 
 	elif keytab_url.scheme == "ssh":
-		raise NotImplementedError
+                try:
+                        subprocess.check_call(shlex.split("ssh %s 'cp --archive %s %s.rekeybackup.%s'" % (keytab_url.netloc, keytab_url.path, keytab_url.path, time.time())))
+                        subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)))
+                except Exception:
+                        raise RuntimeError("cannot put keytab") from None
 
 
 	else:

@@ -3,16 +3,16 @@
 . /puppet/metalib/bin/lib.sh
 
 
-export BASE="$(readlink -f $(dirname $(readlink -f $0))/../..)"
-export KEYTAB="/tmp/rekey_service.keytab"
-export KRB5CCNAME="/tmp/rekey_service.ccache"
-export PRINCIPAL="hostx/$(hostname -f)@RSYSLOG3"
+BASE="$(readlink -f $(dirname $(readlink -f $0))/../..)"
+KEYTAB="/tmp/rekey_service.keytab"
+KRB5CCNAME="/tmp/rekey_service.ccache"
+PRINCIPAL="hostx/$(hostname -f)@RSYSLOG3"
 
 
 
 echo "========== INFO: cleanup"
 kadmin.heimdal -l del ${PRINCIPAL}
-rm ${KEYTAB} ${KEYTAB}.new ${KEYTAB}.rekeybackup
+rm -f ${KEYTAB} ${KEYTAB}.new ${KEYTAB}.rekeybackup*
 kdestroy
 
 
@@ -102,6 +102,8 @@ klist -v
 
 
 
-
+echo "========== INFO: cleanup"
+rm -f ${KEYTAB} ${KEYTAB}.new ${KEYTAB}.rekeybackup* ${KRB5CCNAME}
+unset KRB5CCNAME
 
 rreturn 0 "$0"
