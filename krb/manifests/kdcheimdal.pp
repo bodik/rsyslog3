@@ -33,4 +33,15 @@ class krb::kdcheimdal(
 
 	include krb::kadminhttp
 	class { "krb::avahikdc": enabled => $avahi_broadcast, }
+
+
+	# rekey support
+	file { "/etc/heimdal-kdc/kadmin-weakcrypto.conf":
+		content => template("${module_name}/etc/heimdal-kdc/kadmin-weakcrypto.conf.erb"),
+		owner => root, group => "root", mode => "0644",
+	}
+	file { "/etc/heimdal-kdc/kadmin-rekey.conf":
+		content => template("${module_name}/etc/heimdal-kdc/kadmin-rekey.conf.erb"),
+		owner => root, group => "root", mode => "0644",
+	}
 }
