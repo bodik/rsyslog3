@@ -1,10 +1,11 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """perform principal rekey"""
 
 import argparse
 import logging
 import os
 import random
+import re
 import shlex
 import subprocess
 import sys
@@ -82,7 +83,7 @@ def fetch(keytab):
 
 	elif keytab_url.scheme == "ssh":
 		try:
-			subprocess.check_call(shlex.split("scp %s:%s %s" % (keytab_url.netloc, keytab_url.path, keytab_temp)))
+			subprocess.check_call(shlex.split("scp -q %s:%s %s" % (keytab_url.netloc, keytab_url.path, keytab_temp)))
 		except Exception:
 			os.unlink(keytab_temp)
 			raise RuntimeError("cannot fetch keytab") from None
@@ -105,22 +106,43 @@ def fetch(keytab):
 def generate_new_keys(keytab, principal, password_length):
 	"""generates new keys for principal, returns new password"""
 
-	## get current kvno
-	kvno = None
-	keytab_listing = subprocess.check_output(shlex.split("ktutil --verbose --keytab=%s list" % keytab)).decode("UTF-8")
-	for line in reversed(keytab_listing.splitlines()):
-		try:
-			parsed_kvno, parsed_enctype, parsed_principal, parsed_date = list(filter(None, line.strip().split(" ")))
-			logger.debug("%s %s %s %s", parsed_kvno, parsed_enctype, parsed_principal, parsed_date)
-			if principal == parsed_principal:
-				kvno = int(parsed_kvno)
+	## get current kvno for principal's keys
+	kdb_kvno = -1
+	try:
+		principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --config=%s --local get %s" % (REKEY_CONFIG, principal))).decode("UTF-8")
+		for line in principal_listing.splitlines():
+			if line.strip().startswith("Kvno:"):
+				kdb_kvno = int(line.strip().split(" ")[-1])
 				break
-		except Exception:
-			pass
+	except Exception as e:
+		logger.error(e)
+	if kdb_kvno <= 0:
+		raise RuntimeError("cannot detect current kvno from kdb") from None
+	logger.debug("kdb detected kvno: %s", kdb_kvno)
 
-	if not kvno:
-		raise RuntimeError("cannot detect current kvno")
-	logger.info("detected kvno: %s", kvno)
+
+
+	## get current kvno from managed keytab
+	keytab_kvno = -1
+	try:
+		keytab_listing = subprocess.check_output(shlex.split("ktutil --verbose --keytab=%s list" % keytab)).decode("UTF-8")
+		for line in reversed(keytab_listing.splitlines()):
+			match = re.match(r"\s*(?P<kvno>\d+)\s+(?P<enctype>\S+)\s+(?P<principal>\S+)\s+(?P<date>\S+)\s*", line.strip())
+			if match and (match.group("principal") == principal) and (int(match.group("kvno")) > keytab_kvno):
+				keytab_kvno = int(match.group("kvno"))
+	except Exception as e:
+		logger.error(e)
+
+	if keytab_kvno <= 0:
+		raise RuntimeError("cannot detect current kvno from keytab") from None
+	logger.debug("keytab detected kvno: %s", keytab_kvno)
+
+
+
+	## check kvno's match kdb to keytab
+	if kdb_kvno != keytab_kvno:
+		raise RuntimeError("kdb and keytab kvnos does not match")
+
 
 
 	## generate new password and put appropriate keys to keytab
@@ -130,8 +152,9 @@ def generate_new_keys(keytab, principal, password_length):
 			password_key = subprocess.check_output(shlex.split( \
 				"string2key --principal=%s --keytype=%s %s" % (principal, enctype, password))).decode("UTF-8").split(" ")[-1]
 			subprocess.check_call(shlex.split("ktutil --keytab=%s add --enctype=%s --principal=%s --kvno=%s --hex --password=%s" % ( \
-				keytab, enctype, principal, kvno+1, password_key)))
-	except Exception:
+				keytab, enctype, principal, kdb_kvno+1, password_key)))
+	except Exception as e:
+		logger.error(e)
 		raise RuntimeError("cannot add new key to keytab") from None
 
 
@@ -160,7 +183,7 @@ def put(keytab_temp, keytab):
 	elif keytab_url.scheme == "ssh":
 		try:
 			subprocess.check_call(shlex.split("ssh %s 'cp --archive %s %s.rekeybackup.%s'" % (keytab_url.netloc, keytab_url.path, keytab_url.path, time.time())))
-			subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)))
+			subprocess.check_call(shlex.split("scp -q %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)))
 		except Exception:
 			raise RuntimeError("cannot put keytab") from None
 
@@ -185,7 +208,7 @@ def kdb_cpw(principal, password):
 	except Exception:
 		raise RuntimeError("cannot cpw for principal") from None
 
-	principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --local get %s" % principal)).decode("UTF-8")
+	principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --config=%s --local get %s" % (REKEY_CONFIG, principal))).decode("UTF-8")
 	logger.info("updated principal: %s", "\n".join(map(lambda x: "> "+x, principal_listing.splitlines())))
 	return True
 
@@ -201,6 +224,9 @@ def main():
 		logger.setLevel(logging.DEBUG)
 	logger.debug(args)
 	_, _, _ = parse_principal(args.principal)
+	if not os.path.exists(REKEY_CONFIG):
+		logger.error("missing rekey config")
+		return ERROR
 
 	try:
 		keytab_temp = fetch(args.keytab)
