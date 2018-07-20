@@ -1,2 +1,2 @@
 #!/bin/sh
-kadmin.heimdal --local list -s --column-info=principal,kvno,keytypes '*'
+kadmin.heimdal --config=/etc/heimdal-kdc/kdc.conf --local list -s --column-info=principal,kvno,keytypes '*'
