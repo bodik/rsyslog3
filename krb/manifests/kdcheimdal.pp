@@ -4,6 +4,9 @@ class krb::kdcheimdal(
 ) {
 	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
 
+	# deps
+	ensure_resource("service", "heimdal-kdc", {})
+
 
 
 	$kdc_server_real = $fqdn
@@ -12,15 +15,11 @@ class krb::kdcheimdal(
 		owner => "root", group => "root", mode => "0644",
 		before => Package["heimdal-clients"],
 	}
-	file { "/etc/heimdal-kdc/":
-		ensure => directory,
-		owner => "root", group => "root", mode => "0755",
-		before => Package["heimdal-kdc"],
-	}
 	file { "/etc/heimdal-kdc/kdc.conf":
 		source => "puppet:///modules/${module_name}/etc/heimdal-kdc/kdc.conf",
 		owner => "root", group => "root", mode => "0644",
-		before => Package["heimdal-kdc"],
+		require => Package["heimdal-kdc"],
+		notify => Service["heimdal-kdc"],
 	}
 
 
