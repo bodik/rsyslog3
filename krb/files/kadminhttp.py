@@ -71,16 +71,22 @@ class kdc_handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		try:
 	                output = subprocess.check_output(shlex.split( "/usr/sbin/kadmin.local 'delprinc' 'host/%s@%s'" % (hostname, args.realm) ))
 			logger.debug("delprinc: %s" % output)
+	                output = subprocess.check_output(shlex.split( "/usr/sbin/kadmin.local 'delprinc' 'nfs/%s@%s'" % (hostname, args.realm) ))
+			logger.debug("delprinc: %s" % output)
 		except Exception as e:
 			logger.debug(e.output)
 
                 output = subprocess.check_call(shlex.split( "/usr/sbin/kadmin.local 'ank' '-randkey' 'host/%s@%s'" % (hostname, args.realm) ))
+		logger.debug("ank: %s" % output)
+                output = subprocess.check_call(shlex.split( "/usr/sbin/kadmin.local 'ank' '-randkey' 'nfs/%s@%s'" % (hostname, args.realm) ))
 		logger.debug("ank: %s" % output)
 
 
 		if os.path.exists(tmpfile):
 			os.unlink(tmpfile)
                 output = subprocess.check_call(shlex.split( "/usr/sbin/kadmin.local 'ktadd' '-keytab' '%s' 'host/%s@%s'" % (tmpfile, hostname, args.realm) ))
+		logger.debug("ktadd: %s" % output)
+                output = subprocess.check_call(shlex.split( "/usr/sbin/kadmin.local 'ktadd' '-keytab' '%s' 'nfs/%s@%s'" % (tmpfile, hostname, args.realm) ))
 		logger.debug("ktadd: %s" % output)
 
 		if os.path.exists(tmpfile):
@@ -98,16 +104,22 @@ class kdc_handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		try:
 	                output = subprocess.check_output(shlex.split( "/usr/bin/kadmin.heimdal --local 'delete' 'host/%s@%s'" % (hostname, args.realm) ))
 			logger.debug("delprinc: %s" % output)
+	                output = subprocess.check_output(shlex.split( "/usr/bin/kadmin.heimdal --local 'delete' 'nfs/%s@%s'" % (hostname, args.realm) ))
+			logger.debug("delprinc: %s" % output)
 		except Exception as e:
 			logger.debug(e.output)
 
                 output = subprocess.check_call(shlex.split( "/usr/bin/kadmin.heimdal --local 'ank' '--use-defaults' '--random-key' 'host/%s@%s'" % (hostname, args.realm) ))
+		logger.debug("ank: %s" % output)
+                output = subprocess.check_call(shlex.split( "/usr/bin/kadmin.heimdal --local 'ank' '--use-defaults' '--random-key' 'nfs/%s@%s'" % (hostname, args.realm) ))
 		logger.debug("ank: %s" % output)
 
 
 		if os.path.exists(tmpfile):
 			os.unlink(tmpfile)
                 output = subprocess.check_call(shlex.split( "/usr/bin/kadmin.heimdal --local 'ext_keytab' '-k' '%s' 'host/%s@%s'" % (tmpfile, hostname, args.realm) ))
+		logger.debug("ext_keytab: %s" % output)
+                output = subprocess.check_call(shlex.split( "/usr/bin/kadmin.heimdal --local 'ext_keytab' '-k' '%s' 'nfs/%s@%s'" % (tmpfile, hostname, args.realm) ))
 		logger.debug("ext_keytab: %s" % output)
 
 		if os.path.exists(tmpfile):
