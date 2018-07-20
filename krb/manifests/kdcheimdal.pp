@@ -12,6 +12,17 @@ class krb::kdcheimdal(
 		owner => "root", group => "root", mode => "0644",
 		before => Package["heimdal-clients"],
 	}
+	file { "/etc/heimdal-kdc/":
+		ensure => directory,
+		owner => "root", group => "root", mode => "0755",
+		before => Package["heimdal-kdc"],
+	}
+	file { "/etc/heimdal-kdc/kdc.conf":
+		source => "puppet:///modules/${module_name}/etc/heimdal-kdc/kdc.conf",
+		owner => "root", group => "root", mode => "0644",
+		before => Package["heimdal-kdc"],
+	}
+
 
 	package { "heimdal-clients": ensure => installed }
 	package { "heimdal-kdc":
@@ -20,7 +31,7 @@ class krb::kdcheimdal(
 	}
 
 	exec { "init realm":
-		command => "/bin/echo -e '\n\n' | /usr/bin/kadmin.heimdal --local init RSYSLOG3; /usr/bin/kadmin.heimdal --local ank --random-key testroot@RSYSLOG3",
+		command => "/bin/echo -e '\n\n' | /usr/bin/kadmin.heimdal --local init RSYSLOG3; /usr/bin/kadmin.heimdal --local ank --user-defaults --random-key testroot@RSYSLOG3",
 		unless => "/usr/bin/kadmin.heimdal --local list -l krbtgt/RSYSLOG3@RSYSLOG3",
 		require => Package["heimdal-kdc"],
 	}
@@ -36,6 +47,7 @@ class krb::kdcheimdal(
 
 
 	# rekey support
+	package { "krb5-gss-samples": ensure => installed }
 	file { "/etc/heimdal-kdc/kadmin-weakcrypto.conf":
 		content => template("${module_name}/etc/heimdal-kdc/kadmin-weakcrypto.conf.erb"),
 		owner => root, group => "root", mode => "0644",

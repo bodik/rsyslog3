@@ -1,14 +1,17 @@
 [logging]
-kdc = FILE:/var/log/heimdal-kdc.log
+	kdc = FILE:/var/log/heimdal-kdc.log
+	kdc = SYSLOG:INFO:AUTH
+	admin_server = SYSLOG:INFO:AUTH
+	default = SYSLOG:INFO:AUTH
 
 [kdc]
-database = {
-	dbname = /var/lib/heimdal-kdc/heimdal
-	acl_file = /etc/heimdal-kdc/kadmind.acl
-}
+	database = {
+		dbname = /var/lib/heimdal-kdc/heimdal
+		acl_file = /etc/heimdal-kdc/kadmind.acl
+	}
 
 [kadmin]
-default_keys = des-cbc-crc:pw-salt des-cbc-md4:pw-salt des-cbc-md5:pw-salt
+	default_keys = des-cbc-crc:pw-salt des-cbc-md4:pw-salt des-cbc-md5:pw-salt
 
 
 
