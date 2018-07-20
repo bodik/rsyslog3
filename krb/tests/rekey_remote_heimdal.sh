@@ -12,6 +12,12 @@ checkzero ${KEYTAB}
 checkzero ${PRINCIPAL}
 
 
+ADMINKEYTAB="/tmp/rekey_remote.keytab"
+export KRB5CCNAME="/tmp/rekey_remove.ccache"
+kadmin.heimdal --local ext_keytab --keytab=${ADMINKEYTAB} testroot@RSYSLOG3
+kinit --keytab=${ADMINKEYTAB} testroot@RSYSLOG3
+
+
 
 echo "========== INFO: prologue"
 kdestroy --credential=${PRINCIPAL}
@@ -43,5 +49,8 @@ fi
 echo "INFO: keytab list"
 klist -v
 
+
+unset KRB5CCNAME
+rm ${ADMINKEYTAB}
 
 rreturn 0 "$0"

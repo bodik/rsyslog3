@@ -17,9 +17,46 @@ import urllib.parse
 ENCTYPES = ["des3-cbc-sha1", "aes256-cts-hmac-sha1-96"]
 REKEY_CONFIG = "/etc/heimdal-kdc/kadmin-rekey.conf"
 
+SUCCESS = 0
+ERROR = 1
 CHOICES = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$^&*()+/?,."
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(levelname)s %(message)s')
+
+
+
+
+
+
+def parse_args():
+	"""parse arguments"""
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--debug", action="store_true")
+	parser.add_argument("--passwordlength", type=int, default=200)
+	parser.add_argument("--keytab", required=True)
+	parser.add_argument("--principal", required=True)
+	return parser.parse_args()
+
+
+
+
+
+
+def parse_principal(principal):
+	"""splits principal to service, name, realm"""
+
+	try:
+		name, realm = principal.split("@")
+	except Exception:
+		raise ValueError("incomplete principal specified") from None
+
+	try:
+		princsvc, princname = name.split("/")
+	except Exception:
+		princsvc = None
+		princname = name
+
+	return (princsvc, princname, realm)
 
 
 
@@ -142,6 +179,7 @@ def put(keytab_temp, keytab):
 def kdb_cpw(principal, password):
 	"""update principals password; override default_keys forcing new keys with requested enctypes"""
 
+	_, _, realm = parse_principal(principal)
 	try:
 		subprocess.check_call(shlex.split("kadmin.heimdal --config-file=%s --local --realm=%s cpw --password=%s %s" % (REKEY_CONFIG, realm, password, principal)))
 	except Exception:
@@ -156,23 +194,13 @@ def kdb_cpw(principal, password):
 
 
 
-def parse_args():
-	"""parse arguments"""
-	parser = argparse.ArgumentParser()
-	parser.add_argument("--debug", action="store_true")
-	parser.add_argument("--passwordlength", type=int, default=200)
-	parser.add_argument("--keytab", required=True)
-	parser.add_argument("--principal", required=True)
-	return parser.parse_args()
-
-
-
 def main():
 	"""main"""
 	args = parse_args()
 	if args.debug:
 		logger.setLevel(logging.DEBUG)
 	logger.debug(args)
+	_, _, _ = parse_principal(args.principal)
 
 	try:
 		keytab_temp = fetch(args.keytab)
@@ -182,6 +210,9 @@ def main():
 		os.unlink(keytab_temp)
 	except Exception as e:
 		logger.error(e)
+		return ERROR
+
+	return SUCCESS
 
 
 

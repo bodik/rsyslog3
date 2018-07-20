@@ -39,4 +39,9 @@ class krb::user(
 		command => "/bin/sh /puppet/krb/bin/kadminhttp_getkeytab.sh ${kdc_server_real}",
 		creates => "/etc/krb5.keytab",
 	}
+	file { "/root/.k5login":
+		content => "testroot@RSYSLOG3",
+		owner => "root", group => "root", mode => "0644",
+		replace => false,
+	}
 }

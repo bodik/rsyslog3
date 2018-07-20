@@ -20,8 +20,8 @@ class krb::kdcheimdal(
 	}
 
 	exec { "init realm":
-		command => "/bin/echo -e '\n\n' | /usr/bin/kadmin.heimdal -l init RSYSLOG3",
-		unless => "/usr/bin/kadmin.heimdal -l list -l krbtgt/RSYSLOG3@RSYSLOG3",
+		command => "/bin/echo -e '\n\n' | /usr/bin/kadmin.heimdal --local init RSYSLOG3; /usr/bin/kadmin.heimdal --local ank --random-key testroot@RSYSLOG3",
+		unless => "/usr/bin/kadmin.heimdal --local list -l krbtgt/RSYSLOG3@RSYSLOG3",
 		require => Package["heimdal-kdc"],
 	}
 
