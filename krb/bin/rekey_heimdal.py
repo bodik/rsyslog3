@@ -121,11 +121,11 @@ def put(keytab_temp, keytab):
 
 
 	elif keytab_url.scheme == "ssh":
-                try:
-                        subprocess.check_call(shlex.split("ssh %s 'cp --archive %s %s.rekeybackup.%s'" % (keytab_url.netloc, keytab_url.path, keytab_url.path, time.time())))
-                        subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)))
-                except Exception:
-                        raise RuntimeError("cannot put keytab") from None
+		try:
+			subprocess.check_call(shlex.split("ssh %s 'cp --archive %s %s.rekeybackup.%s'" % (keytab_url.netloc, keytab_url.path, keytab_url.path, time.time())))
+			subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)))
+		except Exception:
+			raise RuntimeError("cannot put keytab") from None
 
 
 	else:
@@ -143,11 +143,11 @@ def kdb_cpw(principal, password):
 	"""update principals password; override default_keys forcing new keys with requested enctypes"""
 
 	try:
-		subprocess.check_call(shlex.split("kadmin.heimdal --config-file=%s -l cpw --password=%s %s" % (REKEY_CONFIG, password, principal)))
+		subprocess.check_call(shlex.split("kadmin.heimdal --config-file=%s --local --realm=%s cpw --password=%s %s" % (REKEY_CONFIG, realm, password, principal)))
 	except Exception:
 		raise RuntimeError("cannot cpw for principal") from None
 
-	principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal -l get %s" % principal)).decode("UTF-8")
+	principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --local get %s" % principal)).decode("UTF-8")
 	logger.info("updated principal: %s", "\n".join(map(lambda x: "> "+x, principal_listing.splitlines())))
 	return True
 

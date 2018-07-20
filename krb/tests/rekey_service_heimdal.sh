@@ -11,7 +11,7 @@ PRINCIPAL="hostx/$(hostname -f)@RSYSLOG3"
 
 
 echo "========== INFO: cleanup"
-kadmin.heimdal -l del ${PRINCIPAL}
+kadmin.heimdal --local del ${PRINCIPAL}
 rm -f ${KEYTAB} ${KEYTAB}.new ${KEYTAB}.rekeybackup*
 kdestroy
 
@@ -22,9 +22,9 @@ kdestroy
 
 echo "========== INFO: create old key"
 kadmin.heimdal --config=/etc/heimdal-kdc/kadmin-weakcrypto.conf --local ank --use-defaults --random-key ${PRINCIPAL}
-kadmin.heimdal -l ext_keytab --keytab=${KEYTAB} ${PRINCIPAL}
+kadmin.heimdal --local ext_keytab --keytab=${KEYTAB} ${PRINCIPAL}
 echo "INFO: weak crypto principal list"
-kadmin.heimdal -l get ${PRINCIPAL}
+kadmin.heimdal --local get ${PRINCIPAL}
 echo "INFO: weak keytab list"
 ktutil --keytab=${KEYTAB} list
 
@@ -83,7 +83,7 @@ klist -v
 
 
 echo "========== INFO: test transition new key"
-kadmin.heimdal -l ext_keytab --keytab=${KEYTAB}.new ${PRINCIPAL}
+kadmin.heimdal --local ext_keytab --keytab=${KEYTAB}.new ${PRINCIPAL}
 kdestroy
 kinit --keytab=${KEYTAB}.new ${PRINCIPAL}
 

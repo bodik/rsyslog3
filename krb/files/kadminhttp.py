@@ -96,18 +96,18 @@ class kdc_handler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 		hostname = self._resolve_client_address(self.client_address[0])
 
 		try:
-	                output = subprocess.check_output(shlex.split( "/usr/bin/kadmin.heimdal -l 'delete' 'host/%s@%s'" % (hostname, args.realm) ))
+	                output = subprocess.check_output(shlex.split( "/usr/bin/kadmin.heimdal --local 'delete' 'host/%s@%s'" % (hostname, args.realm) ))
 			logger.debug("delprinc: %s" % output)
 		except Exception as e:
 			logger.debug(e.output)
 
-                output = subprocess.check_call(shlex.split( "/usr/bin/kadmin.heimdal -l 'ank' '--use-defaults' '--random-key' 'host/%s@%s'" % (hostname, args.realm) ))
+                output = subprocess.check_call(shlex.split( "/usr/bin/kadmin.heimdal --local 'ank' '--use-defaults' '--random-key' 'host/%s@%s'" % (hostname, args.realm) ))
 		logger.debug("ank: %s" % output)
 
 
 		if os.path.exists(tmpfile):
 			os.unlink(tmpfile)
-                output = subprocess.check_call(shlex.split( "/usr/bin/kadmin.heimdal -l 'ext_keytab' '-k' '%s' 'host/%s@%s'" % (tmpfile, hostname, args.realm) ))
+                output = subprocess.check_call(shlex.split( "/usr/bin/kadmin.heimdal --local 'ext_keytab' '-k' '%s' 'host/%s@%s'" % (tmpfile, hostname, args.realm) ))
 		logger.debug("ext_keytab: %s" % output)
 
 		if os.path.exists(tmpfile):
