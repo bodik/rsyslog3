@@ -151,8 +151,8 @@ def generate_new_keys(keytab, principal, password_length):
 		for enctype in ENCTYPES:
 			password_key = subprocess.check_output(shlex.split( \
 				"string2key --principal=%s --keytype=%s %s" % (principal, enctype, password))).decode("UTF-8").split(" ")[-1]
-			subprocess.check_call(shlex.split("ktutil --keytab=%s add --enctype=%s --principal=%s --kvno=%s --hex --password=%s" % ( \
-				keytab, enctype, principal, kdb_kvno+1, password_key)))
+			subprocess.check_call(shlex.split( \
+				"ktutil --keytab=%s add --enctype=%s --principal=%s --kvno=%s --hex --password=%s" % (keytab, enctype, principal, kdb_kvno+1, password_key)))
 	except Exception as e:
 		logger.error(e)
 		raise RuntimeError("cannot add new key to keytab") from None
