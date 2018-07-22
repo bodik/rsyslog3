@@ -17,10 +17,10 @@ class krb::nfsclient(
                 context => "/files/etc/default/nfs-common",
                 changes => ["set NEED_IDMAPD yes", "set NEED_GSSD yes"],
                 require => Package["nfs-common"],
-                notify => Service["auth-rpcgss-module", "rpc-gssd", "rpc-svcgssd"],
+                notify => Service["auth-rpcgss-module", "rpc-gssd"],
         }
 
-        service { ["auth-rpcgss-module", "rpc-gssd", "rpc-svcgssd"]:
+        service { ["auth-rpcgss-module", "rpc-gssd"]:
                 ensure => "running",
                 require => Package["nfs-common"],
         }
@@ -35,6 +35,6 @@ class krb::nfsclient(
                 device => "${nfs_server_real}:/nfsroot",
                 fstype => "nfs4",
                 options => "sec=krb5",
-                require => Service["auth-rpcgss-module", "rpc-gssd", "rpc-svcgssd"],
+                require => Service["auth-rpcgss-module", "rpc-gssd"],
         }
 }
