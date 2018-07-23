@@ -1,5 +1,6 @@
 #!/bin/sh
 # script will test remote nfs/hostname principal rekeying on testbed mount /nfsroot, see krb::nfs* classes
+# usage: sh krb/tests/rekey_nfs_heimdal.sh root@fqdn
 
 . /puppet/metalib/bin/lib.sh
 

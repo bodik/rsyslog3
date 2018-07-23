@@ -1,5 +1,6 @@
 #!/bin/sh
 # script will test remote host/hostname rekeying over ssh
+# usage: sh krb/tests/rekey_remote_heimdal.sh root@fqdn /etc/krb5.keytab host/fqdn@RSYSLOG3
 
 . /puppet/metalib/bin/lib.sh
 

@@ -1,5 +1,6 @@
 #!/bin/sh
 # script will test basic rekeying functionality on local keytab using a test principal hostx/self-fqdn
+# usage: sh krb/tests/rekey_service_heimdal.sh
 
 . /puppet/metalib/bin/lib.sh
 
