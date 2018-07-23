@@ -21,7 +21,7 @@ kdestroy
 
 
 echo "========== INFO: create old key"
-kadmin.heimdal --config=/etc/heimdal-kdc/kadmin-weakcrypto.conf --local ank --use-defaults --random-key ${PRINCIPAL}
+KRB5_CONFIG=/etc/heimdal-kdc/kadmin-weakcrypto.conf kadmin.heimdal --local ank --use-defaults --random-key ${PRINCIPAL}
 kadmin.heimdal --local ext_keytab --keytab=${KEYTAB} ${PRINCIPAL}
 echo "INFO: weak crypto principal list"
 kadmin.heimdal --local get ${PRINCIPAL}
