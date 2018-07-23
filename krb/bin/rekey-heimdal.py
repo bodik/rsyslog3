@@ -209,7 +209,7 @@ def kdb_cpw(principal, password):
 	except Exception:
 		raise RuntimeError("cannot cpw for principal") from None
 
-	principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --config=%s --local get %s" % (REKEY_CONFIG, principal))).decode("UTF-8")
+	principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --config=%s --local --realm=%s get %s" % (REKEY_CONFIG, realm, principal))).decode("UTF-8")
 	logger.info("updated principal: %s", "\n".join(map(lambda x: "> "+x, principal_listing.splitlines())))
 	return True
 
