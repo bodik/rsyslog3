@@ -1,4 +1,5 @@
 #!/bin/sh
+# script will test remote host/hostname rekeying over ssh
 
 . /puppet/metalib/bin/lib.sh
 

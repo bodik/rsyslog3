@@ -1,4 +1,5 @@
 #!/bin/sh
+# script will test basic rekeying functionality on local keytab using a test principal hostx/self-fqdn
 
 . /puppet/metalib/bin/lib.sh
 

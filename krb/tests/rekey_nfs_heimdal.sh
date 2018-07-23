@@ -1,4 +1,5 @@
 #!/bin/sh
+# script will test remote nfs/hostname principal rekeying on testbed mount /nfsroot, see krb::nfs* classes
 
 . /puppet/metalib/bin/lib.sh
 
