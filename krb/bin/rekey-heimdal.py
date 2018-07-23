@@ -67,6 +67,7 @@ def enctypes_from_config(config):
 	with open(config, "r") as ftmp:
 		data = [x for x in ftmp.read().splitlines()]
 
+	section = None
 	for line in data:
 		match = re.search(r"\[(?P<section>.*)\]", line)
 		if match:
