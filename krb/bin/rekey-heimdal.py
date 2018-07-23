@@ -33,6 +33,7 @@ def parse_args():
 	parser.add_argument("--passwordlength", type=int, default=200)
 	parser.add_argument("--keytab", required=True)
 	parser.add_argument("--principal", required=True)
+	parser.add_argument("--puppetstorage", default=None)
 	return parser.parse_args()
 
 
@@ -192,7 +193,7 @@ def generate_new_keys(keytab, principal, password_length):
 
 
 
-def put(keytab_temp, keytab):
+def put(keytab_temp, keytab, puppet_storage):
 	"""update keytab with backup"""
 
 	keytab_url = urllib.parse.urlparse(keytab, scheme="file")
@@ -207,8 +208,17 @@ def put(keytab_temp, keytab):
 
 	elif keytab_url.scheme == "ssh":
 		try:
+			if puppet_storage:
+				subprocess.check_call(shlex.split("ssh %s '[ -x /usr/local/sbin/puppet-stop ] && /usr/local/sbin/puppet-stop rekey && while [ -n \"$(pgrep -f '/usr/bin/ruby /usr/bin/puppet agent')\" ]; do sleep 1; done'"))
+				puppet_storage_url = urllib.parse.urlparse(keytab)
+				subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, puppet_storage_url.netloc, puppet_storage_url.path)), stdout=subprocess.DEVNULL)
+
 			subprocess.check_call(shlex.split("ssh %s 'cp --archive %s %s.rekeybackup.%s'" % (keytab_url.netloc, keytab_url.path, keytab_url.path, time.time())))
 			subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)), stdout=subprocess.DEVNULL)
+
+			if puppet_storage:
+				subprocess.check_call(shlex.split("ssh %s '[ -x /usr/local/sbin/puppet-start ] && /usr/local/sbin/puppet-start rekey'"))
+
 		except Exception:
 			raise RuntimeError("cannot put keytab") from None
 
@@ -256,7 +266,7 @@ def main():
 	try:
 		keytab_temp = fetch(args.keytab)
 		password = generate_new_keys(keytab_temp, args.principal, args.passwordlength)
-		put(keytab_temp, args.keytab)
+		put(keytab_temp, args.keytab, args.puppetstorage)
 		kdb_cpw(args.principal, password)
 		os.unlink(keytab_temp)
 	except Exception as e:
