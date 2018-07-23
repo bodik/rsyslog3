@@ -209,7 +209,7 @@ def put(keytab_temp, keytab, puppet_storage):
 	elif keytab_url.scheme == "ssh":
 		try:
 			if puppet_storage:
-				subprocess.check_call(shlex.split("ssh %s '[ -x /usr/local/sbin/puppet-stop ] && /usr/local/sbin/puppet-stop rekey && while [ -n \"$(pgrep -f '/usr/bin/ruby /usr/bin/puppet agent')\" ]; do sleep 1; done'"))
+				subprocess.check_call(shlex.split("ssh %s '[ -x /usr/local/sbin/puppet-stop ] && /usr/local/sbin/puppet-stop rekey && while [ -n \"$(pgrep -f '/usr/bin/ruby /usr/bin/puppet agent')\" ]; do sleep 1; done'" % keytab_url.netloc))
 				puppet_storage_url = urllib.parse.urlparse(keytab)
 				subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, puppet_storage_url.netloc, puppet_storage_url.path)), stdout=subprocess.DEVNULL)
 
@@ -217,7 +217,7 @@ def put(keytab_temp, keytab, puppet_storage):
 			subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)), stdout=subprocess.DEVNULL)
 
 			if puppet_storage:
-				subprocess.check_call(shlex.split("ssh %s '[ -x /usr/local/sbin/puppet-start ] && /usr/local/sbin/puppet-start rekey'"))
+				subprocess.check_call(shlex.split("ssh %s '[ -x /usr/local/sbin/puppet-start ] && /usr/local/sbin/puppet-start rekey'" % keytab_url.netloc))
 
 		except Exception:
 			raise RuntimeError("cannot put keytab") from None
