@@ -108,8 +108,9 @@ def generate_new_keys(keytab, principal, password_length):
 
 	## get current kvno for principal's keys
 	kdb_kvno = -1
+	_, _, realm = parse_principal(principal)
 	try:
-		principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --config=%s --local get %s" % (REKEY_CONFIG, principal))).decode("UTF-8")
+		principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --config=%s --local --realm=%s get %s" % (REKEY_CONFIG, realm, principal))).decode("UTF-8")
 		for line in principal_listing.splitlines():
 			if line.strip().startswith("Kvno:"):
 				kdb_kvno = int(line.strip().split(" ")[-1])
