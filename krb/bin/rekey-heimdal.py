@@ -83,7 +83,7 @@ def fetch(keytab):
 
 	elif keytab_url.scheme == "ssh":
 		try:
-			subprocess.check_call(shlex.split("scp -q %s:%s %s" % (keytab_url.netloc, keytab_url.path, keytab_temp)))
+			subprocess.check_call(shlex.split("scp %s:%s %s" % (keytab_url.netloc, keytab_url.path, keytab_temp)), stdout=subprocess.DEVNULL)
 		except Exception:
 			os.unlink(keytab_temp)
 			raise RuntimeError("cannot fetch keytab") from None
@@ -183,7 +183,7 @@ def put(keytab_temp, keytab):
 	elif keytab_url.scheme == "ssh":
 		try:
 			subprocess.check_call(shlex.split("ssh %s 'cp --archive %s %s.rekeybackup.%s'" % (keytab_url.netloc, keytab_url.path, keytab_url.path, time.time())))
-			subprocess.check_call(shlex.split("scp -q %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)))
+			subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)), stdout=subprocess.DEVNULL)
 		except Exception:
 			raise RuntimeError("cannot put keytab") from None
 

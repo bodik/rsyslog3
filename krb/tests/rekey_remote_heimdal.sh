@@ -13,7 +13,7 @@ checkzero ${PRINCIPAL}
 
 
 ADMINKEYTAB="/tmp/rekey_remote.keytab"
-export KRB5CCNAME="/tmp/rekey_remove.ccache"
+export KRB5CCNAME="/tmp/rekey_remote.ccache"
 kadmin.heimdal --local ext_keytab --keytab=${ADMINKEYTAB} testroot@RSYSLOG3
 kinit --keytab=${ADMINKEYTAB} testroot@RSYSLOG3
 
