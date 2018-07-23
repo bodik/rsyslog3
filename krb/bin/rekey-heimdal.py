@@ -209,7 +209,7 @@ def put(keytab_temp, keytab, puppet_storage):
 	elif keytab_url.scheme == "ssh":
 		try:
 			if puppet_storage:
-				subprocess.check_call(shlex.split("ssh %s '[ -x /usr/local/sbin/puppet-stop ] && /usr/local/sbin/puppet-stop rekey && while [ -n \"$(pgrep -f '/usr/bin/ruby /usr/bin/puppet agent')\" ]; do sleep 1; done'" % keytab_url.netloc))
+				subprocess.check_call(["ssh", keytab_url.netloc, "[ -x /usr/local/sbin/puppet-stop ] && /usr/local/sbin/puppet-stop rekey && while [ -n \"$(pgrep -f '^/usr/bin/ruby /usr/bin/puppet agent')\" ]; do sleep 1; done"])
 				puppet_storage_url = urllib.parse.urlparse(keytab)
 				subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, puppet_storage_url.netloc, puppet_storage_url.path)), stdout=subprocess.DEVNULL)
 
