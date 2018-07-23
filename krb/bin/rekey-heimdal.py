@@ -79,7 +79,7 @@ def enctypes_from_config(config):
 			if key == "default_keys":
 				return [x.replace(":pw-salt", "") for x in value.split()]
 
-	raise RuntimeError("new enctypes not detected")
+	raise RuntimeError("enctypes not detected")
 
 
 
