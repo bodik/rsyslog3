@@ -174,6 +174,9 @@ def put(keytab_temp, keytab, puppet_storage):
 			subprocess.check_call(shlex.split("ssh %s 'cp --archive %s %s.rekeybackup.%s'" % (keytab_url.netloc, keytab_url.path, keytab_url.path, time.time())))
 			subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)), stdout=subprocess.DEVNULL)
 
+			logger.debug("put:: flush tgs")
+			subprocess.check_call(shlex.split("kdestroy --credential=host/%s" % keytab_url.hostname))
+
 			if puppet_storage:
 				logger.info("put:: activate puppet on managed node")
 				subprocess.check_call(shlex.split("ssh %s 'if [ -x /usr/local/sbin/puppet-start ]; then /usr/local/sbin/puppet-start rekey; fi'" % keytab_url.netloc))
