@@ -28,11 +28,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(levelname)s
 
 def parse_args():
 	"""parse arguments"""
-	parser = argparse.ArgumentParser(usage="""
-	* must be run on kdc master node (kadmin local)
-	* operator must have valid credentials to access managed (--keytab ssh://...) and configuration management (--puppetstorage ssh://...) node
-	* usage: export FQDN="xxx"; krb/bin/rekey-heimdal.py --keytab ssh://root@${FQDN}/etc/krb5.keytab --principal host/${FQDN}@REALM --puppetstorage ssh://root@puppetmaster/path/krb5.keytab.${FQDN}
-""")
+	parser = argparse.ArgumentParser()
 	parser.add_argument("--debug", action="store_true")
 	parser.add_argument("--passwordlength", type=int, default=200)
 	parser.add_argument("--keytab", required=True)
