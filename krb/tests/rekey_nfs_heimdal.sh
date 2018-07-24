@@ -37,7 +37,7 @@ echo "WARN: >>> check kvno and service ticket lifetime"
 
 
 echo "========== INFO: rekey client begin"
-${BASE}/krb/bin/rekey-heimdal.py --keytab ssh://${REMOTE}${KEYTAB} --principal ${PRINCIPAL} --debug
+${BASE}/krb/bin/rekey-heimdal.py --keytab ssh://${REMOTE}${KEYTAB} --principal ${PRINCIPAL} --puppetstorage ssh://${REMOTE}/dev/shm/puppetstoragetest --debug
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 rekey client"
 fi

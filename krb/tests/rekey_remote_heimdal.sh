@@ -1,18 +1,16 @@
 #!/bin/sh
 # script will test remote host/hostname rekeying over ssh
-# usage: sh krb/tests/rekey_remote_heimdal.sh root@fqdn /etc/krb5.keytab host/fqdn@RSYSLOG3
+# usage: sh krb/tests/rekey_remote_heimdal.sh root@fqdn
 
 . /puppet/metalib/bin/lib.sh
 
 
 BASE="$(readlink -f $(dirname $(readlink -f $0))/../..)"
 REMOTE=$1
-KEYTAB=$2
-PRINCIPAL=$3
 checkzero ${REMOTE}
-checkzero ${KEYTAB}
-checkzero ${PRINCIPAL}
 
+KEYTAB="/etc/krb5.keytab"
+PRINCIPAL="host/$(echo ${REMOTE} | awk -F'@' '{print $2}')@RSYSLOG3"
 
 ADMINKEYTAB="/tmp/rekey_remote.keytab"
 export KRB5CCNAME="/tmp/rekey_remote.ccache"
@@ -33,7 +31,7 @@ klist -v
 
 
 echo "========== INFO: rekey begin"
-${BASE}/krb/bin/rekey-heimdal.py --keytab ssh://${REMOTE}${KEYTAB} --principal ${PRINCIPAL} --debug
+${BASE}/krb/bin/rekey-heimdal.py --keytab ssh://${REMOTE}${KEYTAB} --principal ${PRINCIPAL} --puppetstorage ssh://${REMOTE}/dev/shm/puppetstoragetest --debug
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 rekey"
 fi
