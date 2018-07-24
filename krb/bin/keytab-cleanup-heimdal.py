@@ -133,6 +133,9 @@ def cleanup(keytab, principal):
 				logger.info("removing: %s", line)
 				subprocess.check_call(shlex.split( \
 					"ktutil --keytab=%s remove --principal=%s --kvno=%s --enctype=%s" % (keytab, principal, int(match.group("kvno")), match.group("enctype"))))
+				logger.debug("cleanup:: flush cached tgs")
+				subprocess.check_call(shlex.split("kdestroy --credential=%s" % principal))
+
 	except Exception as e:
 		logger.error(e)
 		raise RuntimeError("pruning keytab failed") from None
@@ -173,9 +176,6 @@ def put(keytab_temp, keytab, puppet_storage):
 			logger.info("put:: upload keytab to managed node")
 			subprocess.check_call(shlex.split("ssh %s 'cp --archive %s %s.rekeybackup.%s'" % (keytab_url.netloc, keytab_url.path, keytab_url.path, time.time())))
 			subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)), stdout=subprocess.DEVNULL)
-
-			logger.debug("put:: flush tgs")
-			subprocess.check_call(shlex.split("kdestroy --credential=host/%s" % keytab_url.hostname))
 
 			if puppet_storage:
 				logger.info("put:: activate puppet on managed node")
