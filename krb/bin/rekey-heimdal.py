@@ -99,6 +99,7 @@ def fetch(keytab):
 		keytab_temp = ftmp.name
 	logger.debug("keytab_temp: %s", keytab_temp)
 
+	logger.info("fetch:: keytab from %s to temporary location %s", keytab, keytab_temp)
 
 	if keytab_url.scheme == "file":
 		try:
@@ -122,7 +123,7 @@ def fetch(keytab):
 
 
 	keytab_listing = subprocess.check_output(shlex.split("ktutil --verbose --keytab=%s list" % keytab_temp)).decode("UTF-8")
-	logger.info("original keytab contents: %s", "\n".join(map(lambda x: "> "+x, keytab_listing.splitlines())))
+	logger.debug("original keytab contents: %s", "\n".join(map(lambda x: "> "+x, keytab_listing.splitlines())))
 	return keytab_temp
 
 
@@ -135,7 +136,7 @@ def fetch(keytab):
 def generate_new_keys(keytab, principal, password_length):
 	"""generates new keys for principal, returns new password"""
 
-	## get current kvno for principal's keys
+	logger.info("generate_new_keys:: kdb kvno detection")
 	kdb_kvno = -1
 	_, _, realm = parse_principal(principal)
 	try:
@@ -152,7 +153,7 @@ def generate_new_keys(keytab, principal, password_length):
 
 
 
-	## get current kvno from managed keytab
+	logger.info("generate_new_keys:: keytab kvno detection")
 	keytab_kvno = -1
 	try:
 		keytab_listing = subprocess.check_output(shlex.split("ktutil --verbose --keytab=%s list" % keytab)).decode("UTF-8")
@@ -169,13 +170,13 @@ def generate_new_keys(keytab, principal, password_length):
 
 
 
-	## check kvno's match kdb to keytab
+	logger.info("generate_new_keys:: kvno match check")
 	if kdb_kvno != keytab_kvno:
 		raise RuntimeError("kdb and keytab kvnos does not match")
 
 
 
-	## generate new password and put appropriate keys to keytab
+	logger.info("generate_new_keys:: put new keys to keytab")
 	password = "".join([random.SystemRandom().choice(CHOICES) for _ in range(password_length)])
 	try:
 		for enctype in enctypes_from_config(os.getenv("KRB5_CONFIG")):
@@ -189,7 +190,7 @@ def generate_new_keys(keytab, principal, password_length):
 
 
 	keytab_listing = subprocess.check_output(shlex.split("ktutil --verbose --keytab=%s list" % keytab)).decode("UTF-8")
-	logger.info("new keys keytab contents: %s", "\n".join(map(lambda x: "> "+x, keytab_listing.splitlines())))
+	logger.debug("new keys keytab contents: %s", "\n".join(map(lambda x: "> "+x, keytab_listing.splitlines())))
 	return password
 
 
@@ -202,6 +203,8 @@ def put(keytab_temp, keytab, puppet_storage):
 
 	keytab_url = urllib.parse.urlparse(keytab, scheme="file")
 
+	logger.info("put:: writeback updated keytab")
+
 	if keytab_url.scheme == "file":
 		try:
 			subprocess.check_call(shlex.split("cp --archive %s %s.rekeybackup.%s" % (keytab_url.path, keytab_url.path, time.time())))
@@ -213,14 +216,18 @@ def put(keytab_temp, keytab, puppet_storage):
 	elif keytab_url.scheme == "ssh":
 		try:
 			if puppet_storage:
+				logger.info("put:: suspend puppet on managed node")
 				subprocess.check_call(["ssh", keytab_url.netloc, "if [ -x /usr/local/sbin/puppet-stop ]; then /usr/local/sbin/puppet-stop rekey; while [ -n \"$(pgrep -f '^/usr/bin/ruby /usr/bin/puppet agent')\" ]; do sleep 1; done; fi"])
 				puppet_storage_url = urllib.parse.urlparse(puppet_storage)
+				logger.info("put:: upload keytab to puppetstorage")
 				subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, puppet_storage_url.netloc, puppet_storage_url.path)), stdout=subprocess.DEVNULL)
 
+			logger.info("put:: upload keytab to managed node")
 			subprocess.check_call(shlex.split("ssh %s 'cp --archive %s %s.rekeybackup.%s'" % (keytab_url.netloc, keytab_url.path, keytab_url.path, time.time())))
 			subprocess.check_call(shlex.split("scp %s %s:%s" % (keytab_temp, keytab_url.netloc, keytab_url.path)), stdout=subprocess.DEVNULL)
 
 			if puppet_storage:
+				logger.info("put:: activate puppet on managed node")
 				subprocess.check_call(shlex.split("ssh %s 'if [ -x /usr/local/sbin/puppet-start ]; then /usr/local/sbin/puppet-start rekey; fi'" % keytab_url.netloc))
 
 		except Exception as e:
@@ -243,13 +250,14 @@ def kdb_cpw(principal, password):
 	"""update principals password; override default_keys forcing new keys with requested enctypes"""
 
 	_, _, realm = parse_principal(principal)
+	logger.info("kdb_cpw:: update managed principal")
 	try:
 		subprocess.check_call(shlex.split("kadmin.heimdal --local --realm=%s cpw --password=%s %s" % (realm, password, principal)))
 	except Exception:
 		raise RuntimeError("cannot cpw for principal") from None
 
 	principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --local --realm=%s get %s" % (realm, principal))).decode("UTF-8")
-	logger.info("updated principal: %s", "\n".join(map(lambda x: "> "+x, principal_listing.splitlines())))
+	logger.debug("updated principal: %s", "\n".join(map(lambda x: "> "+x, principal_listing.splitlines())))
 	return True
 
 
@@ -278,6 +286,7 @@ def main():
 		logger.error(e)
 		return ERROR
 
+	logger.info("main:: finished")
 	return SUCCESS
 
 
