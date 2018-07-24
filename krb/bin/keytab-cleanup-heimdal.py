@@ -12,7 +12,8 @@ import tempfile
 import time
 import urllib.parse
 
-
+#rekey config must be enforced through env, otherwise /etc/krb5.conf could override values
+os.environ["KRB5_CONFIG"] = "/etc/heimdal-kdc/kadmin-rekey.conf"
 SUCCESS = 0
 ERROR = 1
 logger = logging.getLogger()
