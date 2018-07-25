@@ -6,4 +6,4 @@ else
 	REALM=$1
 fi
 
-kadmin.heimdal --config=/etc/heimdal-kdc/kdc.conf --local --realm=$REALM list -s --column-info=principal,kvno,keytypes '*'
+KRB5_CONFIG=/etc/heimdal-kdc/kdc.conf kadmin.heimdal --local --realm=$REALM list -s --column-info=principal,kvno,keytypes '*'

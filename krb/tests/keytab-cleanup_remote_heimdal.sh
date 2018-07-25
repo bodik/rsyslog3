@@ -1,6 +1,6 @@
 #!/bin/sh
 # script will test remote host/hostname rekeying over ssh
-# usage: sh krb/tests/rekey_remote_heimdal.sh root@fqdn
+# usage: sh krb/tests/keytab-cleanup_remote_heimdal.sh root@fqdn
 
 . /puppet/metalib/bin/lib.sh
 
@@ -25,17 +25,15 @@ ssh ${REMOTE} "/bin/true"
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 prologue ssh"
 fi
-echo "INFO: keytab list"
-klist -v
 
 
 
-echo "========== INFO: rekey begin"
-${BASE}/krb/bin/rekey-heimdal.py --keytab ssh://${REMOTE}${KEYTAB} --principal ${PRINCIPAL} --puppetstorage ssh://${REMOTE}/dev/shm/puppetstoragetest --debug
+echo "========== INFO: keytab-cleanup begin"
+${BASE}/krb/bin/keytab-cleanup-heimdal.py --keytab ssh://${REMOTE}${KEYTAB} --principal ${PRINCIPAL} --puppetstorage ssh://${REMOTE}/dev/shm/puppetstoragetest --debug
 if [ $? -ne 0 ]; then
-	rreturn 1 "$0 rekey"
+	rreturn 1 "$0 keytabl-cleanup"
 fi
-echo "========== INFO: rekey end"
+echo "========== INFO: keytab-cleanup end"
 
 
 
@@ -46,8 +44,6 @@ ssh ${REMOTE} "/bin/true"
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 epilogue ssh"
 fi
-echo "INFO: keytab list"
-klist -v
 
 
 unset KRB5CCNAME

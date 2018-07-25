@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""perform principal rekey"""
+"""perform keytab cleanup from old keys"""
 
 import argparse
 import logging
 import os
-import random
 import re
 import shlex
 import subprocess
@@ -17,7 +16,6 @@ import urllib.parse
 os.environ["KRB5_CONFIG"] = "/etc/heimdal-kdc/kadmin-rekey.conf"
 SUCCESS = 0
 ERROR = 1
-CHOICES = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$^&*()+/?,."
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(levelname)s %(message)s')
 
@@ -25,12 +23,12 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(levelname)s
 
 
 
-
 def parse_args():
 	"""parse arguments"""
-	parser = argparse.ArgumentParser()
+	parser = argparse.ArgumentParser(usage="""
+	TODO
+""")
 	parser.add_argument("--debug", action="store_true")
-	parser.add_argument("--passwordlength", type=int, default=200)
 	parser.add_argument("--keytab", required=True)
 	parser.add_argument("--principal", required=True)
 	parser.add_argument("--puppetstorage", default=None)
@@ -56,31 +54,6 @@ def parse_principal(principal):
 		princname = name
 
 	return (princsvc, princname, realm)
-
-
-
-
-
-
-def enctypes_from_config(config):
-	"""resolves default_keys/enctypes from config"""
-
-	with open(config, "r") as ftmp:
-		data = [x for x in ftmp.read().splitlines()]
-
-	section = None
-	for line in data:
-		match = re.search(r"\[(?P<section>.*)\]", line)
-		if match:
-			section = match.group("section")
-			continue
-
-		if (section == "kadmin") and line:
-			(key, value) = [x.strip() for x in line.split("=")]
-			if key == "default_keys":
-				return [x.replace(":pw-salt", "") for x in value.split()]
-
-	raise RuntimeError("enctypes not detected")
 
 
 
@@ -126,68 +99,50 @@ def fetch(keytab):
 
 
 
+def cleanup(keytab, principal):
+	"""fetch principal info from kdb, purge all non-corresponding keys from keytab"""
 
-
-
-def generate_new_keys(keytab, principal, password_length):
-	"""generates new keys for principal, returns new password"""
-
-	logger.info("generate_new_keys:: kdb kvno detection")
-	kdb_kvno = -1
+	logger.info("cleanup:: kdb get principal")
 	_, _, realm = parse_principal(principal)
+	kdb_kvno = None
+	kdb_enctypes = []
 	try:
 		principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --local --realm=%s get %s" % (realm, principal))).decode("UTF-8")
 		for line in principal_listing.splitlines():
 			if line.strip().startswith("Kvno:"):
 				kdb_kvno = int(line.strip().split(" ")[-1])
-				break
+
+			if line.strip().startswith("Keytypes:"):
+				for enctype in line.strip().split(":")[1].split(","):
+					match = re.match(r"\s*(?P<enctype>.*)\((?P<salt>.*)\)\[(?P<kvno>\d+)\]", enctype)
+					if match:
+						kdb_enctypes.append(match.group("enctype"))
 	except Exception as e:
 		logger.error(e)
-	if kdb_kvno <= 0:
-		raise RuntimeError("cannot detect current kvno from kdb") from None
-	logger.debug("kdb detected kvno: %s", kdb_kvno)
+	if (not kdb_kvno) or (not kdb_enctypes):
+		raise RuntimeError("fetching principal info from kdb failed")
+	logger.debug("principal %s, kvno %d, enctypes %s", principal, kdb_kvno, kdb_enctypes)
 
 
-
-	logger.info("generate_new_keys:: keytab kvno detection")
-	keytab_kvno = -1
 	try:
+		logger.info("cleanup:: prune keytab")
 		keytab_listing = subprocess.check_output(shlex.split("ktutil --verbose --keytab=%s list" % keytab)).decode("UTF-8")
 		for line in keytab_listing.splitlines():
 			match = re.match(r"\s*(?P<kvno>\d+)\s+(?P<enctype>\S+)\s+(?P<principal>\S+)\s+(?P<date>\S+)\s*", line.strip())
-			if match and (match.group("principal") == principal) and (int(match.group("kvno")) > keytab_kvno):
-				keytab_kvno = int(match.group("kvno"))
+			if match and (match.group("principal") == principal) and ((match.group("enctype") not in kdb_enctypes) or (int(match.group("kvno")) != kdb_kvno)):
+				logger.info("removing: %s", line)
+				subprocess.check_call(shlex.split( \
+					"ktutil --keytab=%s remove --principal=%s --kvno=%s --enctype=%s" % (keytab, principal, int(match.group("kvno")), match.group("enctype"))))
+				logger.debug("cleanup:: flush cached tgs")
+				subprocess.check_call(shlex.split("kdestroy --credential=%s" % principal))
+
 	except Exception as e:
 		logger.error(e)
-
-	if keytab_kvno <= 0:
-		raise RuntimeError("cannot detect current kvno from keytab") from None
-	logger.debug("keytab detected kvno: %s", keytab_kvno)
-
-
-
-	logger.info("generate_new_keys:: kvno match check")
-	if kdb_kvno != keytab_kvno:
-		raise RuntimeError("kdb and keytab kvnos does not match")
-
-
-
-	logger.info("generate_new_keys:: put new keys to keytab")
-	password = "".join([random.SystemRandom().choice(CHOICES) for _ in range(password_length)])
-	try:
-		for enctype in enctypes_from_config(os.getenv("KRB5_CONFIG")):
-			password_key = subprocess.check_output(shlex.split( \
-				"string2key --principal=%s --keytype=%s %s" % (principal, enctype, password))).decode("UTF-8").split(" ")[-1]
-			subprocess.check_call(shlex.split( \
-				"ktutil --keytab=%s add --enctype=%s --principal=%s --kvno=%s --hex --password=%s" % (keytab, enctype, principal, kdb_kvno+1, password_key)))
-	except Exception as e:
-		logger.error(e)
-		raise RuntimeError("cannot add new key to keytab") from None
-
+		raise RuntimeError("pruning keytab failed") from None
 
 	keytab_listing = subprocess.check_output(shlex.split("ktutil --verbose --keytab=%s list" % keytab)).decode("UTF-8")
-	logger.debug("new keys keytab contents: %s", "\n".join(map(lambda x: "> "+x, keytab_listing.splitlines())))
-	return password
+	logger.debug("pruned keytab contents: %s", "\n".join(map(lambda x: "> "+x, keytab_listing.splitlines())))
+	return True
 
 
 
@@ -242,23 +197,6 @@ def put(keytab_temp, keytab, puppet_storage):
 
 
 
-def kdb_cpw(principal, password):
-	"""update principals password; override default_keys forcing new keys with requested enctypes"""
-
-	_, _, realm = parse_principal(principal)
-	logger.info("kdb_cpw:: update managed principal")
-	try:
-		subprocess.check_call(shlex.split("kadmin.heimdal --local --realm=%s cpw --password=%s %s" % (realm, password, principal)))
-	except Exception:
-		raise RuntimeError("cannot cpw for principal") from None
-
-	principal_listing = subprocess.check_output(shlex.split("kadmin.heimdal --local --realm=%s get %s" % (realm, principal))).decode("UTF-8")
-	logger.debug("updated principal: %s", "\n".join(map(lambda x: "> "+x, principal_listing.splitlines())))
-	return True
-
-
-
-
 
 
 def main():
@@ -268,15 +206,11 @@ def main():
 		logger.setLevel(logging.DEBUG)
 	logger.debug(args)
 	_, _, _ = parse_principal(args.principal)
-	if not os.path.exists(os.getenv("KRB5_CONFIG")):
-		logger.error("missing rekey config")
-		return ERROR
 
 	try:
 		keytab_temp = fetch(args.keytab)
-		password = generate_new_keys(keytab_temp, args.principal, args.passwordlength)
+		cleanup(keytab_temp, args.principal)
 		put(keytab_temp, args.keytab, args.puppetstorage)
-		kdb_cpw(args.principal, password)
 		os.unlink(keytab_temp)
 	except Exception as e:
 		logger.error(e)

@@ -1,4 +1,6 @@
 #!/bin/sh
+# script will test basic rekeying functionality on local keytab using a test principal hostx/self-fqdn
+# usage: sh krb/tests/rekey_service_heimdal.sh
 
 . /puppet/metalib/bin/lib.sh
 
@@ -21,7 +23,7 @@ kdestroy
 
 
 echo "========== INFO: create old key"
-kadmin.heimdal --config=/etc/heimdal-kdc/kadmin-weakcrypto.conf --local ank --use-defaults --random-key ${PRINCIPAL}
+KRB5_CONFIG=/etc/heimdal-kdc/kadmin-weakcrypto.conf kadmin.heimdal --local ank --use-defaults --random-key ${PRINCIPAL}
 kadmin.heimdal --local ext_keytab --keytab=${KEYTAB} ${PRINCIPAL}
 echo "INFO: weak crypto principal list"
 kadmin.heimdal --local get ${PRINCIPAL}
