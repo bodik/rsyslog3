@@ -55,7 +55,7 @@ class Worker(threading.Thread):
 
 			while buf.find(delim) != -1:
 				line, buf = buf.split('\n', 1)
-				yield line.encode('unicode_escape', errors='replace')
+				yield line.encode('unicode_escape', errors='replace').replace("\\\\", "\\")
 		return
 
 
