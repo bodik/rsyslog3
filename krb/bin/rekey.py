@@ -55,7 +55,10 @@ class Kadmin(object):
 				continue
 	
 			if (section == "kadmin") and line:
-				(key, value) = [x.strip() for x in line.split("=")]
+				try:
+					(key, value) = [x.strip() for x in line.split("=")]
+				except Exception:
+					continue
 				if key == "default_keys":
 					ret += [x.replace(":pw-salt", "") for x in value.split()]
 
@@ -83,7 +86,10 @@ class Kadmin(object):
 				continue
 
 			if (section == "domain_realm") and line:
-				(domain, realm) = [x.strip() for x in line.split("=")]
+				try:
+					(domain, realm) = [x.strip() for x in line.split("=")]
+				except Exception:
+					continue
 				# most specific match must win
 				if (host.find(domain) > -1) and (len(domain) >= len(guessed_realm["domain"])):
 					guessed_realm = {"domain": domain, "realm": realm}
@@ -98,7 +104,11 @@ class Kadmin(object):
 		if name.find("@") > -1:
 			return name
 		else:
-			return "%s@%s" % (name, Kadmin.guess_realm(name))
+			realm = Kadmin.guess_realm(name)
+			if realm:
+				return "%s@%s" % (name, realm)
+			else:
+				raise RuntimeError("cannot canonicalize name %s" % name)
 
 
 
@@ -381,11 +391,11 @@ class Rekeyer(object):
 def parse_args():
 	"""parse arguments"""
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--debug", action="store_true")
-	parser.add_argument("--keytab", required=True)
-	parser.add_argument("--principal", required=True)
-	parser.add_argument("--puppetstorage", default=None)
-	parser.add_argument("--action", default="rekey", choices=["rekey", "cleanupkeytab"])
+	parser.add_argument("--debug", action="store_true", help="print debug messages")
+	parser.add_argument("--keytab", required=True, help="keytab to manage")
+	parser.add_argument("--principal", required=True, help="principal to manage")
+	parser.add_argument("--puppetstorage", default=None, help="URI to configuration management storage")
+	parser.add_argument("--action", default="rekey", choices=["rekey", "cleanupkeytab"], help="requested operation; default is 'rekey'")
 	return parser.parse_args()
 
 
@@ -401,26 +411,24 @@ def main():
 		logger.error("missing rekey config")
 		return ERROR
 
-	try:
-		kadmin = KadminLocalHeimdal(Kadmin.guess_realm(args.principal), "/usr/bin/kadmin.heimdal")
-		rekeyer = Rekeyer(kadmin, args.keytab)
 
-		rekeyer.fetch_keytab()
+	kadmin = KadminLocalHeimdal(Kadmin.guess_realm(args.principal), "/usr/bin/kadmin.heimdal")
+	rekeyer = Rekeyer(kadmin, args.keytab)
 
-		if args.action == "rekey":
-			password = rekeyer.new_key_to_keytab(args.principal)
-		elif args.action == "cleanupkeytab":
-			rekeyer.drop_old_keys_from_keytab(args.principal)
+	rekeyer.fetch_keytab()
 
-		rekeyer.update_keytab(args.puppetstorage)
+	if args.action == "rekey":
+		password = rekeyer.new_key_to_keytab(args.principal)
+	elif args.action == "cleanupkeytab":
+		rekeyer.drop_old_keys_from_keytab(args.principal)
 
-		if args.action == "rekey":
-			rekeyer.update_kdb(args.principal, password)
+	rekeyer.update_keytab(args.puppetstorage)
 
-		rekeyer.cleanup()
-	except Exception as e:
-		logger.error(e)
-		return ERROR
+	if args.action == "rekey":
+		rekeyer.update_kdb(args.principal, password)
+
+	rekeyer.cleanup()
+
 
 	logger.info("main:: finished")
 	return SUCCESS

@@ -7,7 +7,7 @@
 
 BASE="$(readlink -f $(dirname $(readlink -f $0))/../..)"
 KEYTAB="/tmp/rekey_service.keytab"
-PRINCIPAL="hostx/$(hostname -f)@RSYSLOG3"
+PRINCIPAL="hostx/$(hostname -f)"
 export KRB5CCNAME="/tmp/rekey_service.ccache"
 
 

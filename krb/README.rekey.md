@@ -14,18 +14,18 @@
 
 2. rekey principals
 	* list principals `krb/bin/kadmin-list-heimdal.sh REALM | grep des-`
-	* rekey principal `krb/bin/rekey-heimdal.py --keytab X --principal Y --puppetstorage Z`, eg.
+	* rekey principal `krb/bin/rekey.py --keytab X --principal Y --puppetstorage Z`, eg.
 ```
-export FQDN="xxx"; krb/bin/rekey-heimdal.py --keytab ssh://root@${FQDN}/etc/krb5.keytab --principal host/${FQDN}@REALM --puppetstorage ssh://root@puppetmaster/path/krb5.keytab.${FQDN}
+export FQDN="xxx"; krb/bin/rekey.py --keytab ssh://{FQDN}/etc/krb5.keytab --principal host/${FQDN} --puppetstorage ssh://puppetmaster/path/krb5.keytab.${FQDN}
 ```
 
 
 3. wait for max renew time for existing service tickets to expire
 
 
-4. cleanup keytab `krb/bin/keytab-cleanup-heimdal.py --keytab X --principal Y --puppetstorage Z`
+4. cleanup keytab `krb/bin/rekey.py --keytab X --principal Y --puppetstorage Z --action cleanupkeytab`
 ```
-export FQDN="xxx"; krb/bin/keytab-cleanup-heimdal.py --keytab ssh://root@${FQDN}/etc/krb5.keytab --principal host/${FQDN}@REALM --puppetstorage ssh://root@puppetmaster/path/krb5.keytab.${FQDN}
+export FQDN="xxx"; krb/bin/rekey.py --keytab ssh://${FQDN}/etc/krb5.keytab --principal host/${FQDN} --puppetstorage ssh://puppetmaster/path/krb5.keytab.${FQDN} --action cleanupkeytab
 ```
 
 

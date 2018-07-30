@@ -53,7 +53,7 @@ echo "WARN: >>> check kvno and service ticket lifetime"
 
 
 echo "========== INFO: rekey server begin"
-${BASE}/krb/bin/rekey-heimdal.py --keytab /etc/krb5.keytab --principal "nfs/$(hostname -f)@RSYSLOG3" --debug
+${BASE}/krb/bin/rekey.py --keytab /etc/krb5.keytab --principal "nfs/$(hostname -f)" --debug
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 rekey server"
 fi
@@ -71,4 +71,4 @@ echo "WARN: >>> check kvno and service ticket lifetime"
 unset KRB5CCNAME
 rm ${ADMINKEYTAB}
 
-#rreturn 0 "$0"
+rreturn 0 "$0"
