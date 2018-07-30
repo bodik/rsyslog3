@@ -6,6 +6,7 @@ import os
 import redis
 import signal
 import socket
+import ssl
 import sys
 import threading
 import time
@@ -33,11 +34,15 @@ class Worker(threading.Thread):
 		for data in self.readlines():
 			self.queue.enqueue(data)
 			logger.debug("%s read \"%s\"" % (self.name, data))
+		if isinstance(self.client, ssl.SSLSocket):
+			self.client.shutdown(socket.SHUT_RDWR)
 		self.client.close()
 		logger.info("exit %s" % self.name)
 
 
 	def teardown(self):
+		if isinstance(self.client, ssl.SSLSocket):
+			self.client.shutdown(socket.SHUT_RDWR)
 		self.client.close()
 
 
@@ -50,7 +55,7 @@ class Worker(threading.Thread):
 
 			while buf.find(delim) != -1:
 				line, buf = buf.split('\n', 1)
-				yield line.encode('unicode_escape', errors='replace')
+				yield line.encode('unicode_escape', errors='replace').replace("\\\\", "\\")
 		return
 
 
@@ -182,6 +187,8 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--port", default="47800", type=int, help="port to listen for incomming connections")
+	parser.add_argument("--ssl", default=None, help="key, certificate, intermediates")
+
 	parser.add_argument("--redishost", default="localhost", help="redis server host")
 	parser.add_argument("--redisport", default=16379, type=int, help="redis server port")
 	parser.add_argument("--rediskey", default="test", help="redis key to write")
@@ -193,6 +200,7 @@ if __name__ == "__main__":
 	parser.add_argument("--listerperiod", default=10, type=int, help="thread lister period")
 	parser.add_argument("--shutdowntimeout", default=10, type=int, help="shutdowntimeout")
 	parser.add_argument("--debug", action='store_true', default=False, help="debug")
+
 
         args = parser.parse_args()
 	for loggerhadler in logger.handlers:
@@ -220,8 +228,21 @@ if __name__ == "__main__":
 		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		server_socket.bind(("",args.port))
 		server_socket.listen(5)
+		if args.ssl:
+			context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+			context.load_cert_chain(certfile=args.ssl)
+			context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
+			context.set_ciphers("HIGH")
+			#context.load_verify_locations(cafile=args.ssl)
+			#context.verify_mode = ssl.CERT_REQUIRED
 		while True:
 	        	client, client_address = server_socket.accept()
+			if args.ssl:
+				try:
+					client = context.wrap_socket(client, server_side=True)
+				except Exception as e:
+					logger.warn("%s, %s", e, client_address)
+					continue
 			worker = Worker(client, client_address, thread_queue)
 			if worker:
 				worker.start()

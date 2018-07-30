@@ -63,22 +63,32 @@ class rediser(
 	}
 
 	file { "${install_dir}/rediser.conf":
-		source => "puppet:///modules/${module_name}/opt/rediser/rediser.conf",
+		content => template("${module_name}/rediser.conf.erb"),
 		owner => "root", group => "root", mode => "0644",
 		require => File["${install_dir}"],
 		notify => Service["rediser"],
 	}
 
+	exec { "install_sslselfcert.sh":
+		command => "/bin/sh /puppet/metalib/bin/install_sslselfcert.sh ${install_dir}/ssl ${fqdn} ${service_user}",
+		creates => "${install_dir}/ssl/${fqdn}.crt",
+		require => File["${install_dir}"],
+	}
+	file { "${install_dir}/ssl/default.bundle":
+		ensure => link, target => "${install_dir}/ssl/${fqdn}.bundle", replace => false,
+		require => Exec["install_sslselfcert.sh"],
+	}
+
 	file { "/etc/systemd/system/rediser.service":
 		content => template("${module_name}/rediser.service.erb"),
 		owner => "root", group => "root", mode => "0644",
-		require => [File["${install_dir}/rediser_master.py"], File["${install_dir}/rediser.conf"]],
+		require => [File["${install_dir}/rediser_master.py"], File["${install_dir}/rediser.conf"], Exec["install_sslselfcert.sh"]],
 		notify => Service["rediser"],
 	}
 	service { "rediser":
 		enable => true,
 		ensure => running,
-		require => [File["/etc/systemd/system/rediser.service"]],
+		require => File["/etc/systemd/system/rediser.service"],
 	}
 
 

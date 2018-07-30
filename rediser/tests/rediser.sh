@@ -37,6 +37,15 @@ if [ $? -ne 0 ]; then
 fi
 
 
+MSG="selftest $(date +%s)"
+echo $MSG | openssl s_client -host localhost -port 47804
+sleep 2
+/puppet/rediser/bin/redis.sh lpop testssl | grep "$MSG"
+if [ $? -ne 0 ]; then
+	rreturn 1 "$0 rediser ssl failed"
+fi
+
+
 SERVICE=_rediser._tcp
 avahi-browse -t $SERVICE --resolve -p | grep $(facter ipaddress)
 if [ $? -ne 0 ]; then
