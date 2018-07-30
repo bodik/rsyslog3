@@ -230,19 +230,17 @@ class Rekeyer(object):
 	
 		self.log.info("new_keys:: generate new key to keytab")
 
-
 		kdb_kvno = self.kadmin.principal_kvno(principal)
 		self.log.debug("principal's kdb kvno: %s", kdb_kvno)
 	
 		keytab_kvno = -1
-		full_principal = self.kadmin.canonicalize_name(principal)
 		for line in self.kadmin.keytab_list(self.keytab_temp).splitlines():
 			match = re.match(r"\s*(?P<kvno>\d+)\s+(?P<enctype>\S+)\s+(?P<principal>\S+)\s+(?P<date>\S+)\s*", line.strip())
-			if match and (match.group("principal") == full_principal) and (int(match.group("kvno")) > keytab_kvno):
+			if match and (match.group("principal") == principal) and (int(match.group("kvno")) > keytab_kvno):
 				keytab_kvno = int(match.group("kvno"))
-		if keytab_kvno <= 0:
+		if keytab_kvno < 1:
 			raise RuntimeError("cannot detect current kvno from keytab")
-		self.log.debug("principal's keytab kvno: %s", kdb_kvno)
+		self.log.debug("principal's keytab kvno: %s", keytab_kvno)
 	
 		if kdb_kvno != keytab_kvno:
 			raise RuntimeError("kdb and keytab kvnos does not match")
@@ -352,17 +350,16 @@ class Rekeyer(object):
 	
 	
 		try:
-			full_principal = self.kadmin.canonicalize_name(principal)
 			for line in self.kadmin.keytab_list(self.keytab_temp).splitlines():
 				match = re.match(r"\s*(?P<kvno>\d+)\s+(?P<enctype>\S+)\s+(?P<principal>\S+)\s+(?P<date>\S+)\s*", line.strip())
-				if match and (match.group("principal") == full_principal) and ((match.group("enctype") not in kdb_enctypes) or (int(match.group("kvno")) != kdb_kvno)):
+				if match and (match.group("principal") == principal) and ((match.group("enctype") not in kdb_enctypes) or (int(match.group("kvno")) != kdb_kvno)):
 					self.log.debug("removing: %s", line)
 					self.subprocess_check_output( \
-						"ktutil --keytab=%s remove --principal=%s --kvno=%s --enctype=%s" % (self.keytab_temp, full_principal, int(match.group("kvno")), match.group("enctype")),
+						"ktutil --keytab=%s remove --principal=%s --kvno=%s --enctype=%s" % (self.keytab_temp, principal, int(match.group("kvno")), match.group("enctype")),
 						"cannot remove key from keytab")
 					try:
 						self.subprocess_check_output( \
-							"kdestroy --credential=%s" % full_principal,
+							"kdestroy --credential=%s" % principal,
 							"cannot flush cached tgs")
 					except Exception as e:
 						pass
@@ -412,20 +409,22 @@ def main():
 		return ERROR
 
 
-	kadmin = KadminLocalHeimdal(Kadmin.guess_realm(args.principal), "/usr/bin/kadmin.heimdal")
+	full_principal = Kadmin.canonicalize_name(args.principal)
+	kadmin = KadminLocalHeimdal(full_principal.split("@")[-1], "/usr/bin/kadmin.heimdal")
 	rekeyer = Rekeyer(kadmin, args.keytab)
+
 
 	rekeyer.fetch_keytab()
 
 	if args.action == "rekey":
-		password = rekeyer.new_key_to_keytab(args.principal)
+		password = rekeyer.new_key_to_keytab(full_principal)
 	elif args.action == "cleanupkeytab":
-		rekeyer.drop_old_keys_from_keytab(args.principal)
+		rekeyer.drop_old_keys_from_keytab(full_principal)
 
 	rekeyer.update_keytab(args.puppetstorage)
 
 	if args.action == "rekey":
-		rekeyer.update_kdb(args.principal, password)
+		rekeyer.update_kdb(full_principal, password)
 
 	rekeyer.cleanup()
 
