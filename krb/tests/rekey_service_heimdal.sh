@@ -55,7 +55,7 @@ klist -v
 
 
 echo "========== INFO: rekey begin"
-${BASE}/krb/bin/rekey-heimdal.py --keytab ${KEYTAB} --principal ${PRINCIPAL} --debug
+${BASE}/krb/bin/rekey.py --keytab ${KEYTAB} --principal ${PRINCIPAL} --debug
 if [ $? -ne 0 ]; then
 	rreturn 1 "$0 rekey"
 fi
