@@ -1,5 +1,7 @@
 # todo documentation
-class krb::kadminhttp() {
+class krb::kadminhttp(
+	$realm = "RSYSLOG3"
+) {
 	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
 
 	package { "python-netifaces": ensure => installed, }

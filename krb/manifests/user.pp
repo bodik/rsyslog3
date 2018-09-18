@@ -1,5 +1,6 @@
 # todo documentation
 class krb::user(
+	$realm = "RSYSLOG3",
 	$kdc_server = undef,
 	$impl = undef,
 ) {
