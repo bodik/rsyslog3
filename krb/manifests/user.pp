@@ -41,7 +41,7 @@ class krb::user(
 		creates => "/etc/krb5.keytab",
 	}
 	file { "/root/.k5login":
-		content => "testroot@RSYSLOG3",
+		content => "testroot@${realm}",
 		owner => "root", group => "root", mode => "0644",
 		replace => false,
 	}
