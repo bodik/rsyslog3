@@ -8,7 +8,7 @@ filter {
                                 tag_on_failure => []
                         }
 			mutate {
-				split => { "modulesused" => " " }
+				split => { "[modules][used]" => " " }
 			}
                 }
 	}
