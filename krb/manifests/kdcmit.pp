@@ -1,5 +1,6 @@
 # todo documentation
 class krb::kdcmit(
+	$realm = "RSYSLOG3",
 	$avahi_broadcast = true,
 ) {
 	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
@@ -25,7 +26,7 @@ class krb::kdcmit(
 		before => Package[$packages],
 	}
 	file { "/etc/krb5kdc/kdc.conf":
-		source => "puppet:///modules/${module_name}/etc/krb5kdc/kdc.conf",
+		content => template("${module_name}/etc/krb5kdc/kdc.conf.erb"),
 		owner => "root", group => "root", mode => "0644",
 		before => Package[$packages],
 	}
@@ -37,6 +38,6 @@ class krb::kdcmit(
 		require => Package[$packages],
 	}
 
-	include krb::kadminhttp
+	class { "krb::kadminhttp": realm => $realm, }
 	class { "krb::avahikdc": enabled => $avahi_broadcast, }
 }

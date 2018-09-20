@@ -1,5 +1,6 @@
 #todo documentation
 class krb::kdcheimdal(
+	$realm = "RSYSLOG3",
 	$avahi_broadcast = true,
 ) {
 	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
@@ -30,8 +31,8 @@ class krb::kdcheimdal(
 	}
 
 	exec { "init realm":
-		command => "/bin/echo -e '\n\n' | /usr/bin/kadmin.heimdal --local init RSYSLOG3; /usr/bin/kadmin.heimdal --local ank --use-defaults --random-key testroot@RSYSLOG3",
-		unless => "/usr/bin/kadmin.heimdal --local list -l krbtgt/RSYSLOG3@RSYSLOG3",
+		command => "/bin/echo -e '\n\n' | /usr/bin/kadmin.heimdal --local init ${realm}; /usr/bin/kadmin.heimdal --local ank --use-defaults --random-key testroot@${realm}",
+		unless => "/usr/bin/kadmin.heimdal --local list -l krbtgt/${realm}@${realm}",
 		require => Package["heimdal-kdc"],
 	}
 
@@ -41,18 +42,6 @@ class krb::kdcheimdal(
 	}
 
 
-	include krb::kadminhttp
+	class { "krb::kadminhttp": realm => $realm, }
 	class { "krb::avahikdc": enabled => $avahi_broadcast, }
-
-
-	# rekey support
-	package { "krb5-gss-samples": ensure => installed }
-	file { "/etc/heimdal-kdc/kadmin-weakcrypto.conf":
-		content => template("${module_name}/etc/heimdal-kdc/kadmin-weakcrypto.conf.erb"),
-		owner => root, group => "root", mode => "0644",
-	}
-	file { "/etc/heimdal-kdc/kadmin-rekey.conf":
-		content => template("${module_name}/etc/heimdal-kdc/kadmin-rekey.conf.erb"),
-		owner => root, group => "root", mode => "0644",
-	}
 }

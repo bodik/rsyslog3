@@ -2,7 +2,7 @@
 class krb::nfsserver() {
 	notice("INFO: pa.sh -v --noop --show_diff -e \"include ${name}\"")
 
-	
+
 	package { ["nfs-common", "nfs-kernel-server"]: ensure => installed }
 
 	file { "/nfsroot":
