@@ -69,14 +69,14 @@ class rediser(
 		notify => Service["rediser"],
 	}
 
-	exec { "install_sslselfcert.sh":
+	exec { "install_sslselfcert.sh ${install_dir}/ssl":
 		command => "/bin/sh /puppet/metalib/bin/install_sslselfcert.sh ${install_dir}/ssl ${fqdn} ${service_user}",
 		creates => "${install_dir}/ssl/${fqdn}.crt",
 		require => File["${install_dir}"],
 	}
 	file { "${install_dir}/ssl/default.bundle":
 		ensure => link, target => "${install_dir}/ssl/${fqdn}.bundle", replace => false,
-		require => Exec["install_sslselfcert.sh"],
+		require => Exec["install_sslselfcert.sh ${install_dir}/ssl"],
 	}
 
 	file { "/etc/systemd/system/rediser.service":
