@@ -41,7 +41,7 @@ def get_duplicate_connections(connections):
 	for i in set(connections):
 		count = connections.count(i)
 		if count > 1:
-                	ret[i] = count
+			ret[i] = count
 	logger.debug(ret)
 	return ret
 
