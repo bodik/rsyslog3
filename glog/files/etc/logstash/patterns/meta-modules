@@ -1,5 +1,5 @@
 #campr@gram1 (8049525.arien.ics.muni.cz) module add cuda-6.5 python27-modules-gcc cmake-2.8.12 ffmpeg opencv-2.4 mkl-11.0 matlab-8.3
-PBSJOBID (out-of-job|[a-zA-Z0-9_/\-\.\[\]]+)
+PBSJOBID [a-zA-Z0-9_/\-\.\[\]]+
 MODULENAME [a-zA-Z0-9\.\-_]+
 
 MODULESLINE %{USERNAME:[modules][username]}@%{HOSTNAME} \(%{PBSJOBID:[modules][jobid]}\) module (add|load) %{MODULENAME:[modules][used]}
