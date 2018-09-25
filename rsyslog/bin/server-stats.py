@@ -3,12 +3,15 @@
 import argparse
 import json
 import logging
+import functools
 import shlex
 import socket
 import subprocess
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
+
+PBS_SERVERS = ["arien-pro.ics.muni.cz", "pbs.elixir-czech.cz"]
 
 
 
@@ -23,8 +26,8 @@ def resolve_address(address):
 
 def get_connections():
 	ret = []
-	self_address = subprocess.getoutput("facter ipaddress")
-	netstat = subprocess.getoutput("netstat -nlpa | grep ^tcp | grep ESTABLISHED")
+	self_address = subprocess.check_output("facter ipaddress", shell=True).decode("utf-8").strip()
+	netstat = subprocess.check_output("netstat -nlpa | grep ^tcp | grep ESTABLISHED", shell=True).decode("utf-8").strip()
 	for line in netstat.splitlines():
 		tmp = line.split()
 		local_addr = tmp[3]
@@ -47,9 +50,9 @@ def get_duplicate_connections(connections):
 
 
 
-def get_pbsnodes():
+def get_pbsnodes(server):
 	ret = []
-	pbsnodes_output = subprocess.getoutput("pbsnodes -a -F dsv")
+	pbsnodes_output = subprocess.check_output("pbsnodes -a -F dsv -s %s" % server, shell=True).decode("utf-8").strip()
 	for line in pbsnodes_output.splitlines():
 		tmp = line.split("|")
 		mom = tmp[1].split("=")[1]
@@ -65,6 +68,7 @@ def get_pbsnodes():
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--debug", action="store_true")
+parser.add_argument("--full", action="store_true")
 args = parser.parse_args()
 if args.debug:
 	logger.setLevel(logging.DEBUG)
@@ -72,11 +76,14 @@ if args.debug:
 
 connections = get_connections()
 duplicate_connections = get_duplicate_connections(connections)
-pbsnodes = get_pbsnodes()
+pbsnodes = functools.reduce(lambda x, y: x+get_pbsnodes(y), PBS_SERVERS, [])
 missing_pbsnodes = [x for x in pbsnodes if x not in connections]
 connected_nonpbs_nodes = [x for x in connections if x not in pbsnodes]
+
 
 print("Total connections: %d" % len(connections))
 print("Duplicate connections: %s" % duplicate_connections)
 print("Total pbsnodes: %d" % len(pbsnodes))
 print("Missing pbsnodes: %s" % missing_pbsnodes)
+if args.full:
+	print("Connected nodes: %s" % sorted(connections))
