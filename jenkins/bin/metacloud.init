@@ -2,13 +2,9 @@
 
 #https://wiki.metacentrum.cz/wiki/P%C5%99%C3%ADstup_do_MetaCloudu_p%C5%99es_p%C5%99%C3%ADkazovou_%C5%99%C3%A1dku
 
-export ONE_LISTCONF=$(cat /dev/shm/username)
-export ONE_HOST="https://cloud.metacentrum.cz"
-export ONE_XMLRPC="$ONE_HOST:6443/RPC2"
-
+export ONE_XMLRPC="$(cat /dev/shm/one_host)"
 export ONE_AUTH="/dev/shm/one_auth"
 export ONERSA="/dev/shm/sshkey"
-export ONEUSERNAME=$ONE_LISTCONF
 
 
 
@@ -64,12 +60,12 @@ vm_build() {
 	/puppet/jenkins/bin/metacloud.init shutdown
 	/puppet/jenkins/bin/metacloud.init destroy
 
-	if [ -z $1 ]; then
+	if [ -z "$1" ]; then
 		TEMPLATE="rsyslog3-stretch-manualsize"
 	else
 		TEMPLATE=$1
 	fi
-	onetemplate instantiate $TEMPLATE --name $VMNAME --hold
+	onetemplate instantiate "$TEMPLATE" --name $VMNAME --hold
 	
 	rreturn $? "$0"
 }
@@ -204,7 +200,7 @@ case "$1" in
 
 
 	build)
-		vm_build
+		vm_build "$2"
 	;;
 	start)
 		vm_start "$2"
