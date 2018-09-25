@@ -2,7 +2,7 @@
 Description=kadminhttp service
 
 [Service]
-ExecStart=/usr/bin/python /opt/kadminhttp/kadminhttp.py
+ExecStart=/usr/bin/python /opt/kadminhttp/kadminhttp.py --realm <%= @realm %>
 WorkingDirectory=/tmp
 StandardOutput=syslog
 StandardError=syslog
