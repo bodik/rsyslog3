@@ -82,7 +82,7 @@ class rediser(
 	file { "/etc/systemd/system/rediser.service":
 		content => template("${module_name}/rediser.service.erb"),
 		owner => "root", group => "root", mode => "0644",
-		require => [File["${install_dir}/rediser_master.py"], File["${install_dir}/rediser.conf"], Exec["install_sslselfcert.sh"]],
+		require => [File["${install_dir}/rediser_master.py"], File["${install_dir}/rediser.conf"], Exec["install_sslselfcert.sh ${install_dir}/ssl"]],
 		notify => Service["rediser"],
 	}
 	service { "rediser":
