@@ -34,7 +34,7 @@ component.check.sh		-- script for state detection (noop show_diff)
 Bootstrap suite from a git repository, subsequent calls will pull from master repo.
 
 ```
-wget https://haas.cesnet.cz/haas.git/bootstrap.install.sh && sh bootstrap.install.sh
+wget https://rsyslog.metacentrum.cz/rsyslog3.git/bootstrap.install.sh && sh bootstrap.install.sh
 cd /puppet && ls -l
 sh bootstrap.install.sh
 ```
