@@ -16,17 +16,14 @@ cd /tmp || exit 1
 
 
 rreturn() {
-	RET=$1
-	MSG=$2
+	RET=$1; shift
+
 	if [ $RET -eq 0 ]; then
-		echo "RESULT: OK $MSG"
+		echo "RESULT: OK $@"
 		exit 0
-	else
-		echo "RESULT: FAILED $MSG"
-		exit 1
 	fi
 
-	echo "RESULT: FAILED THIS SHOULD NOT HAPPEN $0 $@"
+	echo "RESULT: FAILED $@"
 	exit 1
 }
 
@@ -54,14 +51,12 @@ vm_status() {
 	rreturn $? "$0 status"
 }
 
-
-
 vm_build() {
 	/puppet/jenkins/bin/metacloud.init shutdown
 	/puppet/jenkins/bin/metacloud.init destroy
 
 	if [ -z "$1" ]; then
-		TEMPLATE="rsyslog3-stretch-manualsize"
+		TEMPLATE="rsyslog3"
 	else
 		TEMPLATE=$1
 	fi
@@ -69,8 +64,6 @@ vm_build() {
 	
 	rreturn $? "$0"
 }
-
-
 
 vm_start() {
 	VMID=$(/puppet/jenkins/bin/metacloud.init id)
@@ -121,12 +114,9 @@ vm_ssh() {
 	if [ -z "$VMIP" ]; then
 		rreturn 1 "vm ip not detected from metacloud"
 	fi
-	ssh -i $ONERSA -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -o 'ConnectTimeout=5' -o 'LogLevel=quiet' root@$VMIP "$1"
+	ssh -i $ONERSA -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -o 'ConnectTimeout=5' -o 'LogLevel=quiet' root@$VMIP $@
 	rreturn $? "$0 ssh $@"
 }
-
-
-
 
 vm_shutdown() {
 	VMID=$(/puppet/jenkins/bin/metacloud.init id)
@@ -163,25 +153,11 @@ vm_destroy() {
 	rreturn $? "$0 destroy $@"
 }
 
-
-
-
-
-
-
-
 metacloud_creds() {
 	echo "transfer credentials to /dev/shm and then login"
 	su jenkins
 	echo "try metacloud.init templates to sync vm templates"
 }
-
-metacloud_templates() {
-	onetemplate delete rsyslog3-stretch 1>/dev/null
-	onetemplate create /puppet/jenkins/files/template.rsyslog3-stretch
-}
-
-
 
 
 
@@ -191,7 +167,8 @@ case "$1" in
 		vm_id
 	;;
 	list)
-		vm_list "$2"
+		shift
+		vm_list $@
 	;;
 	status)
 		vm_status
@@ -200,10 +177,11 @@ case "$1" in
 
 
 	build)
-		vm_build "$2"
+		shift
+		vm_build $@
 	;;
 	start)
-		vm_start "$2"
+		vm_start
 	;;
 	fixup)
 		vm_fixup
@@ -212,10 +190,8 @@ case "$1" in
 
 
 	ssh)
-		vm_ssh "$2"
-	;;
-	node)
-		VMNAME=$2 /puppet/jenkins/bin/metacloud.init ssh "$3"
+		shift
+		vm_ssh $@
 	;;
 
 
@@ -232,20 +208,15 @@ case "$1" in
 	creds)
 		metacloud_creds
 	;;
-	templates)
-		metacloud_templates
-	;;
 
 
-	sshs)
-		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "RS-test"|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
-	;;
-	sshdev)
-		VMNAME=$(/puppet/jenkins/bin/metacloud.init list|grep "RDEVCLIENTX"|awk '{print $4}') /puppet/jenkins/bin/metacloud.init ssh "$2"
-	;;
-	all)
-		for all in $(/puppet/jenkins/bin/metacloud.init list | grep "$2" | awk '{print $4}'); do
-			VMNAME=$all /puppet/jenkins/bin/metacloud.init ssh "$3" &
+
+	ssh_multi)
+		shift
+		SELECTOR="$1"; shift
+
+		for all in $(/puppet/jenkins/bin/metacloud.init list | grep "$SELECTOR" | awk '{print $4}'); do
+			VMNAME=$all /puppet/jenkins/bin/metacloud.init ssh $@ &
 		done
 		wait
 	;;

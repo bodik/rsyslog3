@@ -1,17 +1,14 @@
 #!/bin/sh
 
 rreturn() {
-	RET=$1
-	MSG=$2
+	RET=$1; shift
+
 	if [ $RET -eq 0 ]; then
-		echo "RESULT: OK $MSG"
+		echo "RESULT: OK $@"
 		exit 0
-	else
-		echo "RESULT: FAILED $MSG"
-		exit 1
 	fi
 
-	echo "RESULT: FAILED THIS SHOULD NOT HAPPEN $0 $@"
+	echo "RESULT: FAILED $@"
 	exit 1
 }
 
@@ -32,4 +29,3 @@ checkzero() {
                 exit 1
         fi
 }
-
